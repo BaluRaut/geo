@@ -1,0 +1,546 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Geo Tiles Setup — Project Plan</title>
+  <style>
+    :root {
+      --bg: #0f1117;
+      --surface: #1a1d27;
+      --surface2: #222536;
+      --border: #2e3147;
+      --accent: #6366f1;
+      --accent2: #22d3ee;
+      --green: #22c55e;
+      --yellow: #f59e0b;
+      --red: #ef4444;
+      --text: #e2e8f0;
+      --muted: #64748b;
+      --code-bg: #0d1117;
+    }
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    body {
+      font-family: 'Segoe UI', system-ui, sans-serif;
+      background: var(--bg);
+      color: var(--text);
+      line-height: 1.7;
+      padding: 2rem 1rem;
+    }
+    .container { max-width: 960px; margin: 0 auto; }
+
+    /* Header */
+    header {
+      border-bottom: 1px solid var(--border);
+      padding-bottom: 1.5rem;
+      margin-bottom: 2.5rem;
+    }
+    header h1 { font-size: 1.8rem; color: #fff; }
+    header p { color: var(--muted); margin-top: .4rem; font-size: .95rem; }
+    .badge {
+      display: inline-block;
+      padding: .2rem .7rem;
+      border-radius: 999px;
+      font-size: .75rem;
+      font-weight: 600;
+      margin-left: .5rem;
+    }
+    .badge-wip  { background: #f59e0b22; color: var(--yellow); border: 1px solid #f59e0b44; }
+    .badge-done { background: #22c55e22; color: var(--green);  border: 1px solid #22c55e44; }
+    .badge-todo { background: #6366f122; color: var(--accent); border: 1px solid #6366f144; }
+
+    /* Section */
+    section { margin-bottom: 3rem; }
+    h2 {
+      font-size: 1.15rem;
+      color: var(--accent2);
+      text-transform: uppercase;
+      letter-spacing: .08em;
+      margin-bottom: 1.2rem;
+      display: flex;
+      align-items: center;
+      gap: .6rem;
+    }
+    h2::after {
+      content: '';
+      flex: 1;
+      height: 1px;
+      background: var(--border);
+    }
+
+    /* Stack cards */
+    .cards {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+      gap: 1rem;
+    }
+    .card {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 10px;
+      padding: 1.1rem 1.2rem;
+    }
+    .card .icon { font-size: 1.4rem; margin-bottom: .5rem; }
+    .card .title { font-weight: 600; font-size: .95rem; color: #fff; }
+    .card .desc { color: var(--muted); font-size: .83rem; margin-top: .3rem; }
+
+    /* Layer table */
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      font-size: .9rem;
+    }
+    th {
+      text-align: left;
+      padding: .7rem 1rem;
+      background: var(--surface2);
+      color: var(--muted);
+      font-weight: 600;
+      font-size: .78rem;
+      text-transform: uppercase;
+      letter-spacing: .06em;
+    }
+    td {
+      padding: .75rem 1rem;
+      border-top: 1px solid var(--border);
+    }
+    tr:hover td { background: var(--surface); }
+    .tag {
+      display: inline-block;
+      padding: .15rem .55rem;
+      border-radius: 4px;
+      font-size: .75rem;
+      font-weight: 600;
+    }
+    .tag-blue   { background: #3b82f622; color: #60a5fa; }
+    .tag-purple { background: #8b5cf622; color: #a78bfa; }
+    .tag-pink   { background: #ec489922; color: #f472b6; }
+
+    /* Steps */
+    .steps { display: flex; flex-direction: column; gap: 1rem; }
+    .step {
+      display: grid;
+      grid-template-columns: 2.5rem 1fr;
+      gap: 1rem;
+      align-items: start;
+    }
+    .step-num {
+      width: 2.5rem;
+      height: 2.5rem;
+      border-radius: 50%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-weight: 700;
+      font-size: .9rem;
+      flex-shrink: 0;
+    }
+    .step-num.done   { background: #22c55e22; color: var(--green);  border: 1.5px solid #22c55e55; }
+    .step-num.active { background: #f59e0b22; color: var(--yellow); border: 1.5px solid #f59e0b55; }
+    .step-num.todo   { background: var(--surface2); color: var(--muted); border: 1.5px solid var(--border); }
+    .step-body {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 10px;
+      padding: 1rem 1.2rem;
+    }
+    .step-body.active-border { border-color: #f59e0b55; }
+    .step-title {
+      font-weight: 600;
+      color: #fff;
+      font-size: .97rem;
+      margin-bottom: .3rem;
+    }
+    .step-desc { color: var(--muted); font-size: .88rem; }
+    .step-sub {
+      margin-top: .7rem;
+      display: flex;
+      flex-direction: column;
+      gap: .4rem;
+    }
+    .sub-item {
+      display: flex;
+      align-items: flex-start;
+      gap: .6rem;
+      font-size: .85rem;
+    }
+    .sub-item .dot {
+      width: 6px; height: 6px;
+      border-radius: 50%;
+      margin-top: .45rem;
+      flex-shrink: 0;
+    }
+    .dot-done   { background: var(--green); }
+    .dot-active { background: var(--yellow); }
+    .dot-todo   { background: var(--muted); }
+
+    /* Code block */
+    pre {
+      background: var(--code-bg);
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      padding: 1rem 1.2rem;
+      font-size: .82rem;
+      overflow-x: auto;
+      color: #a5f3fc;
+      margin-top: .7rem;
+      line-height: 1.6;
+    }
+    code { font-family: 'JetBrains Mono', 'Fira Code', monospace; }
+    .comment { color: var(--muted); }
+    .kw   { color: #c084fc; }
+    .str  { color: #86efac; }
+    .flag { color: #fde68a; }
+
+    /* Architecture diagram */
+    .arch {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 10px;
+      padding: 1.5rem;
+      text-align: center;
+      font-size: .85rem;
+    }
+    .arch-flow {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      flex-wrap: wrap;
+      gap: .5rem;
+      margin-top: .5rem;
+    }
+    .arch-box {
+      background: var(--surface2);
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      padding: .5rem 1rem;
+      color: var(--text);
+      font-weight: 500;
+    }
+    .arch-box.highlight { border-color: var(--accent); color: #a5b4fc; }
+    .arch-arrow { color: var(--muted); font-size: 1.1rem; }
+
+    /* Alert */
+    .alert {
+      border-radius: 8px;
+      padding: .9rem 1.1rem;
+      font-size: .88rem;
+      display: flex;
+      gap: .8rem;
+      align-items: flex-start;
+      margin-top: 1rem;
+    }
+    .alert-warn { background: #f59e0b11; border: 1px solid #f59e0b33; color: #fcd34d; }
+    .alert-info { background: #6366f111; border: 1px solid #6366f133; color: #a5b4fc; }
+
+    footer {
+      border-top: 1px solid var(--border);
+      padding-top: 1.5rem;
+      color: var(--muted);
+      font-size: .82rem;
+      text-align: center;
+      margin-top: 3rem;
+    }
+  </style>
+</head>
+<body>
+<div class="container">
+
+  <!-- Header -->
+  <header>
+    <h1>Geo Tiles Setup <span class="badge badge-wip">In Progress</span></h1>
+    <p>Architecture plan: GeoJSON → PMTiles → Private S3 → CloudFront → MapLibre (React)</p>
+    <p style="margin-top:.5rem; font-size:.8rem; color:#475569;">Last updated: June 15, 2026 &nbsp;·&nbsp; Stack: Serverless 4 · S3 · CloudFront · MapLibre GL</p>
+  </header>
+
+  <!-- Tech Stack -->
+  <section>
+    <h2>Tech Stack</h2>
+    <div class="cards">
+      <div class="card">
+        <div class="icon">🗂️</div>
+        <div class="title">Source Data</div>
+        <div class="desc">Raw GeoJSON files — hex-grid, TPR grid, TPP polygons</div>
+      </div>
+      <div class="card">
+        <div class="icon">⚙️</div>
+        <div class="title">tippecanoe</div>
+        <div class="desc">Converts GeoJSON → PMTiles vector tiles</div>
+      </div>
+      <div class="card">
+        <div class="icon">🪣</div>
+        <div class="title">AWS S3</div>
+        <div class="desc">Private bucket — no public access, tiles stored here</div>
+      </div>
+      <div class="card">
+        <div class="icon">🌐</div>
+        <div class="title">CloudFront + OAC</div>
+        <div class="desc">CDN layer — serves tiles with signed cookie auth</div>
+      </div>
+      <div class="card">
+        <div class="icon">λ</div>
+        <div class="title">Serverless 4</div>
+        <div class="desc">Lambda issues signed cookies for tile access</div>
+      </div>
+      <div class="card">
+        <div class="icon">🗺️</div>
+        <div class="title">MapLibre GL</div>
+        <div class="desc">React map renderer — zoom-based layer visibility</div>
+      </div>
+    </div>
+  </section>
+
+  <!-- Data Layers -->
+  <section>
+    <h2>Data Layers</h2>
+    <table>
+      <thead>
+        <tr>
+          <th>Layer</th>
+          <th>Type</th>
+          <th>Size</th>
+          <th>Zoom Range</th>
+          <th>MapLibre Layer Type</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr>
+          <td><strong>Hex Grid</strong></td>
+          <td><span class="tag tag-blue">Vector</span></td>
+          <td>10×10 = 100 cells</td>
+          <td>min: 3 &nbsp;max: 10</td>
+          <td><code>fill</code></td>
+        </tr>
+        <tr>
+          <td><strong>TPR Grid</strong></td>
+          <td><span class="tag tag-purple">Raster Grid</span></td>
+          <td>100×100 = 10K cells</td>
+          <td>min: 5 &nbsp;max: 12</td>
+          <td><code>fill</code> with color interpolation</td>
+        </tr>
+        <tr>
+          <td><strong>TPP Layer</strong></td>
+          <td><span class="tag tag-pink">Point / Polygon</span></td>
+          <td>2–4 per country</td>
+          <td>min: 0 &nbsp;max: 14</td>
+          <td><code>circle</code> or <code>fill</code></td>
+        </tr>
+      </tbody>
+    </table>
+  </section>
+
+  <!-- Architecture Flow -->
+  <section>
+    <h2>Architecture</h2>
+    <div class="arch">
+      <div style="color:var(--muted); font-size:.8rem; margin-bottom:.8rem;">REQUEST FLOW</div>
+      <div class="arch-flow">
+        <div class="arch-box">React App</div>
+        <div class="arch-arrow">→</div>
+        <div class="arch-box highlight">Lambda<br><span style="font-size:.75rem;color:var(--muted)">GET /tiles/auth</span></div>
+        <div class="arch-arrow">→</div>
+        <div class="arch-box">Signed Cookies<br><span style="font-size:.75rem;color:var(--muted)">set on browser</span></div>
+      </div>
+      <div class="arch-flow" style="margin-top:.8rem;">
+        <div class="arch-box">MapLibre<br><span style="font-size:.75rem;color:var(--muted)">pmtiles:// request</span></div>
+        <div class="arch-arrow">→</div>
+        <div class="arch-box highlight">CloudFront CDN<br><span style="font-size:.75rem;color:var(--muted)">validates cookie</span></div>
+        <div class="arch-arrow">→</div>
+        <div class="arch-box">S3 (private)<br><span style="font-size:.75rem;color:var(--muted)">OAC access only</span></div>
+      </div>
+      <div class="arch-flow" style="margin-top:.8rem;">
+        <div class="arch-box" style="border-color:#22c55e55; color:#86efac;">Tiles rendered in browser<br><span style="font-size:.75rem;color:var(--muted)">zoom-controlled visibility</span></div>
+      </div>
+    </div>
+  </section>
+
+  <!-- Steps -->
+  <section>
+    <h2>Steps — Where We Are & What's Left</h2>
+    <div class="steps">
+
+      <!-- Step 1 — DONE -->
+      <div class="step">
+        <div class="step-num done">✓</div>
+        <div class="step-body">
+          <div class="step-title">Step 1 — Plan & Architecture</div>
+          <div class="step-desc">Decided on stack: PMTiles + S3 private + CloudFront OAC + Serverless 4 + MapLibre</div>
+          <div class="step-sub">
+            <div class="sub-item"><span class="dot dot-done"></span>Layer types identified (hex-grid, TPR, TPP)</div>
+            <div class="sub-item"><span class="dot dot-done"></span>Zoom ranges defined per layer</div>
+            <div class="sub-item"><span class="dot dot-done"></span>Auth approach chosen (CloudFront signed cookies via Lambda)</div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Step 2 — ACTIVE -->
+      <div class="step">
+        <div class="step-num active">2</div>
+        <div class="step-body active-border">
+          <div class="step-title">Step 2 — Convert GeoJSON → PMTiles <span class="badge badge-wip">Current Step</span></div>
+          <div class="step-desc">Install tippecanoe and convert each GeoJSON layer to a .pmtiles file with correct zoom bounds.</div>
+          <div class="step-sub">
+            <div class="sub-item"><span class="dot dot-todo"></span>Install tippecanoe: <code>brew install tippecanoe</code></div>
+            <div class="sub-item"><span class="dot dot-todo"></span>Convert hex-grid.geojson → hex-grid.pmtiles (Z2–z10)</div>
+            <div class="sub-item"><span class="dot dot-todo"></span>Convert tpr.geojson → tpr.pmtiles (Z4–z12)</div>
+            <div class="sub-item"><span class="dot dot-todo"></span>Convert tpp.geojson → tpp.pmtiles (Z0–z14)</div>
+          </div>
+          <pre><code><span class="comment"># Run for each layer</span>
+tippecanoe -o hex-grid.pmtiles <span class="flag">-Z 2 -z 10</span> --layer=hex --force hex-grid.geojson
+tippecanoe -o tpr.pmtiles      <span class="flag">-Z 4 -z 12</span> --layer=tpr --coalesce-densest-as-needed --force tpr.geojson
+tippecanoe -o tpp.pmtiles      <span class="flag">-Z 0 -z 14</span> --layer=tpp --force tpp.geojson</code></pre>
+        </div>
+      </div>
+
+      <!-- Step 3 -->
+      <div class="step">
+        <div class="step-num todo">3</div>
+        <div class="step-body">
+          <div class="step-title">Step 3 — S3 Private Bucket Setup</div>
+          <div class="step-desc">Create a fully private S3 bucket and upload the three .pmtiles files.</div>
+          <div class="step-sub">
+            <div class="sub-item"><span class="dot dot-todo"></span>Create S3 bucket (block ALL public access)</div>
+            <div class="sub-item"><span class="dot dot-todo"></span>Upload hex-grid.pmtiles, tpr.pmtiles, tpp.pmtiles to <code>/tiles/</code></div>
+            <div class="sub-item"><span class="dot dot-todo"></span>Note the bucket ARN for CloudFront policy</div>
+          </div>
+          <pre><code>aws s3api create-bucket --bucket your-tiles-bucket --region us-east-1
+aws s3api put-public-access-block --bucket your-tiles-bucket \
+  --public-access-block-configuration \
+  <span class="str">"BlockPublicAcls=true,IgnorePublicAcls=true,BlockPublicPolicy=true,RestrictPublicBuckets=true"</span>
+
+aws s3 cp hex-grid.pmtiles s3://your-tiles-bucket/tiles/
+aws s3 cp tpr.pmtiles      s3://your-tiles-bucket/tiles/
+aws s3 cp tpp.pmtiles      s3://your-tiles-bucket/tiles/</code></pre>
+        </div>
+      </div>
+
+      <!-- Step 4 -->
+      <div class="step">
+        <div class="step-num todo">4</div>
+        <div class="step-body">
+          <div class="step-title">Step 4 — CloudFront Distribution + OAC</div>
+          <div class="step-desc">Create a CloudFront distribution with Origin Access Control so only CloudFront can read from S3. Enable Range request support (required for PMTiles).</div>
+          <div class="step-sub">
+            <div class="sub-item"><span class="dot dot-todo"></span>Create OAC (Origin Access Control) in CloudFront</div>
+            <div class="sub-item"><span class="dot dot-todo"></span>Create distribution → S3 origin with OAC attached</div>
+            <div class="sub-item"><span class="dot dot-todo"></span>Add <code>Range</code> header to cache key (PMTiles needs this)</div>
+            <div class="sub-item"><span class="dot dot-todo"></span>Update S3 bucket policy to allow CloudFront distribution ARN</div>
+            <div class="sub-item"><span class="dot dot-todo"></span>Generate CloudFront Key Pair (for signed cookies)</div>
+            <div class="sub-item"><span class="dot dot-todo"></span>Store private key in AWS SSM Parameter Store</div>
+          </div>
+          <div class="alert alert-warn">
+            <span>⚠️</span>
+            <span>PMTiles uses HTTP Range requests to fetch only the tile you need from the file. Your CloudFront cache policy MUST include the <code>Range</code> header in the cache key, otherwise all clients get the same cached chunk.</span>
+          </div>
+        </div>
+      </div>
+
+      <!-- Step 5 -->
+      <div class="step">
+        <div class="step-num todo">5</div>
+        <div class="step-body">
+          <div class="step-title">Step 5 — Serverless 4: Lambda Auth Function</div>
+          <div class="step-desc">Deploy a Lambda endpoint (<code>GET /tiles/auth</code>) that issues CloudFront signed cookies. The React app calls this once on load; cookies cover all subsequent tile requests.</div>
+          <div class="step-sub">
+            <div class="sub-item"><span class="dot dot-todo"></span>Scaffold Serverless 4 project</div>
+            <div class="sub-item"><span class="dot dot-todo"></span>Write <code>tiles-auth.ts</code> Lambda handler</div>
+            <div class="sub-item"><span class="dot dot-todo"></span>Set SSM env vars: CF_KEY_PAIR_ID, CF_PRIVATE_KEY, CF_DOMAIN</div>
+            <div class="sub-item"><span class="dot dot-todo"></span>Deploy: <code>sls deploy</code></div>
+            <div class="sub-item"><span class="dot dot-todo"></span>Enable CORS + credentials on API Gateway</div>
+          </div>
+          <pre><code><span class="comment"># serverless.yml (key parts)</span>
+<span class="kw">functions</span>:
+  getTilesCookie:
+    <span class="kw">handler</span>: src/tiles-auth.handler
+    <span class="kw">events</span>:
+      - httpApi:
+          <span class="kw">path</span>: /tiles/auth
+          <span class="kw">method</span>: GET</code></pre>
+        </div>
+      </div>
+
+      <!-- Step 6 -->
+      <div class="step">
+        <div class="step-num todo">6</div>
+        <div class="step-body">
+          <div class="step-title">Step 6 — React + MapLibre Integration</div>
+          <div class="step-desc">Wire up the React map component with PMTiles protocol, fetch signed cookies on mount, then add all three layers with zoom-level visibility controls.</div>
+          <div class="step-sub">
+            <div class="sub-item"><span class="dot dot-todo"></span>Install <code>maplibre-gl</code> and <code>pmtiles</code></div>
+            <div class="sub-item"><span class="dot dot-todo"></span>Register <code>pmtiles://</code> protocol once at app entry point</div>
+            <div class="sub-item"><span class="dot dot-todo"></span>Fetch <code>/tiles/auth</code> on app load (with credentials)</div>
+            <div class="sub-item"><span class="dot dot-todo"></span>Add TPP layer (visible zoom 0–14)</div>
+            <div class="sub-item"><span class="dot dot-todo"></span>Add Hex-grid layer (visible zoom 3–10)</div>
+            <div class="sub-item"><span class="dot dot-todo"></span>Add TPR layer (visible zoom 5–12, color interpolation by value)</div>
+          </div>
+          <pre><code><span class="comment"># Install</span>
+npm install maplibre-gl pmtiles
+
+<span class="comment"># In React component</span>
+<span class="kw">import</span> { Protocol } from <span class="str">'pmtiles'</span>
+<span class="kw">import</span> maplibregl from <span class="str">'maplibre-gl'</span>
+
+<span class="kw">const</span> protocol = new Protocol()
+maplibregl.addProtocol(<span class="str">'pmtiles'</span>, protocol.tile)
+
+<span class="comment"># Layer minzoom / maxzoom controls rendering</span>
+map.addLayer({ id: <span class="str">'hex'</span>, minzoom: 3, maxzoom: 10 ... })
+map.addLayer({ id: <span class="str">'tpr'</span>, minzoom: 5, maxzoom: 12 ... })
+map.addLayer({ id: <span class="str">'tpp'</span>, minzoom: 0, maxzoom: 14 ... })</code></pre>
+        </div>
+      </div>
+
+      <!-- Step 7 -->
+      <div class="step">
+        <div class="step-num todo">7</div>
+        <div class="step-body">
+          <div class="step-title">Step 7 — Test & Verify</div>
+          <div class="step-desc">End-to-end test: confirm tiles load privately, cookies expire and refresh, layers appear at correct zoom levels.</div>
+          <div class="step-sub">
+            <div class="sub-item"><span class="dot dot-todo"></span>Open browser DevTools → Network tab → confirm tile requests have <code>Range</code> header</div>
+            <div class="sub-item"><span class="dot dot-todo"></span>Verify 403 returned without cookies (private access working)</div>
+            <div class="sub-item"><span class="dot dot-todo"></span>Pan/zoom map and confirm each layer appears at correct zoom</div>
+            <div class="sub-item"><span class="dot dot-todo"></span>Test cookie expiry + re-auth flow</div>
+          </div>
+          <div class="alert alert-info">
+            <span>💡</span>
+            <span>Use <a href="https://pmtiles.io" style="color:#818cf8">pmtiles.io</a> inspector locally to preview your .pmtiles files before uploading to S3.</span>
+          </div>
+        </div>
+      </div>
+
+    </div>
+  </section>
+
+  <!-- Progress Summary -->
+  <section>
+    <h2>Progress Summary</h2>
+    <div style="background:var(--surface); border:1px solid var(--border); border-radius:10px; padding:1.2rem 1.5rem;">
+      <div style="display:flex; gap:2rem; flex-wrap:wrap; margin-bottom:1rem;">
+        <div>
+          <div style="font-size:2rem; font-weight:700; color:var(--green)">1</div>
+          <div style="color:var(--muted); font-size:.8rem;">Completed</div>
+        </div>
+        <div>
+          <div style="font-size:2rem; font-weight:700; color:var(--yellow)">1</div>
+          <div style="color:var(--muted); font-size:.8rem;">In Progress</div>
+        </div>
+        <div>
+          <div style="font-size:2rem; font-weight:700; color:var(--muted)">5</div>
+          <div style="color:var(--muted); font-size:.8rem;">Remaining</div>
+        </div>
+      </div>
+      <div style="background:var(--surface2); border-radius:999px; height:8px; overflow:hidden;">
+        <div style="width:14%; height:100%; background: linear-gradient(90deg, var(--green), var(--accent2)); border-radius:999px;"></div>
+      </div>
+      <div style="margin-top:.6rem; color:var(--muted); font-size:.8rem;">Step 1 of 7 complete — currently on Step 2 (GeoJSON conversion)</div>
+    </div>
+  </section>
+
+  <footer>
+    Generated June 15, 2026 &nbsp;·&nbsp; geo/vite-project/docs/tiles-setup.html
+  </footer>
+
+</div>
+</body>
+</html>
