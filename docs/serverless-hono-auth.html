@@ -1,0 +1,682 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Serverless + Hono + Auth — Setup Guide</title>
+  <style>
+    :root {
+      --bg:       #0d1117;
+      --surface:  #161b22;
+      --surface2: #1c2128;
+      --border:   #30363d;
+      --accent:   #58a6ff;
+      --green:    #3fb950;
+      --yellow:   #d29922;
+      --purple:   #bc8cff;
+      --orange:   #ffa657;
+      --red:      #f85149;
+      --text:     #c9d1d9;
+      --muted:    #8b949e;
+      --code-bg:  #0d1117;
+    }
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    body {
+      font-family: -apple-system, 'Segoe UI', system-ui, sans-serif;
+      background: var(--bg);
+      color: var(--text);
+      line-height: 1.7;
+      padding: 2rem 1rem;
+    }
+    .container { max-width: 980px; margin: 0 auto; }
+
+    /* ── Header ── */
+    header { border-bottom: 1px solid var(--border); padding-bottom: 1.5rem; margin-bottom: 2.5rem; }
+    header h1 { font-size: 1.75rem; color: #f0f6fc; letter-spacing: -.02em; }
+    header .sub { color: var(--muted); font-size: .9rem; margin-top: .4rem; }
+    .pill {
+      display: inline-flex; align-items: center; gap: .35rem;
+      padding: .2rem .75rem; border-radius: 999px;
+      font-size: .72rem; font-weight: 600; margin-left: .5rem;
+    }
+    .pill-todo   { background: #58a6ff22; color: var(--accent);  border: 1px solid #58a6ff44; }
+    .pill-done   { background: #3fb95022; color: var(--green);   border: 1px solid #3fb95044; }
+
+    /* ── Sections ── */
+    section { margin-bottom: 3rem; }
+    h2 {
+      font-size: 1rem; color: var(--muted);
+      text-transform: uppercase; letter-spacing: .1em;
+      margin-bottom: 1.2rem;
+      display: flex; align-items: center; gap: .7rem;
+    }
+    h2::after { content: ''; flex: 1; height: 1px; background: var(--border); }
+
+    /* ── Flow diagram ── */
+    .flow {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 10px;
+      padding: 1.4rem 1.6rem;
+    }
+    .flow-label { color: var(--muted); font-size: .75rem; text-transform: uppercase; letter-spacing: .1em; margin-bottom: 1rem; }
+    .flow-row   { display: flex; align-items: center; flex-wrap: wrap; gap: .5rem; margin-bottom: .75rem; }
+    .flow-row:last-child { margin-bottom: 0; }
+    .fbox {
+      background: var(--surface2); border: 1px solid var(--border);
+      border-radius: 7px; padding: .4rem .9rem;
+      font-size: .82rem; font-weight: 500;
+    }
+    .fbox small { display: block; color: var(--muted); font-size: .7rem; font-weight: 400; }
+    .fbox.hi-blue   { border-color: #58a6ff55; color: #79c0ff; }
+    .fbox.hi-green  { border-color: #3fb95055; color: #56d364; }
+    .fbox.hi-purple { border-color: #bc8cff55; color: #d2a8ff; }
+    .fbox.hi-orange { border-color: #ffa65755; color: #ffa657; }
+    .farrow { color: var(--muted); font-size: .9rem; }
+    .fdivider { width: 100%; height: 1px; background: var(--border); margin: .75rem 0; }
+
+    /* ── Stack cards ── */
+    .cards {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(190px, 1fr));
+      gap: .9rem;
+    }
+    .card {
+      background: var(--surface); border: 1px solid var(--border);
+      border-radius: 9px; padding: 1rem 1.1rem;
+    }
+    .card .ico  { font-size: 1.3rem; margin-bottom: .5rem; }
+    .card .ttl  { font-size: .88rem; font-weight: 600; color: #f0f6fc; }
+    .card .dsc  { font-size: .78rem; color: var(--muted); margin-top: .2rem; }
+    .card .pkg  { font-size: .74rem; color: var(--purple); margin-top: .4rem; font-family: monospace; }
+
+    /* ── Steps ── */
+    .steps { display: flex; flex-direction: column; gap: 1rem; }
+    .step  { display: grid; grid-template-columns: 2.4rem 1fr; gap: .9rem; }
+    .snum  {
+      width: 2.4rem; height: 2.4rem; border-radius: 50%;
+      display: flex; align-items: center; justify-content: center;
+      font-weight: 700; font-size: .85rem; flex-shrink: 0; margin-top: .15rem;
+      background: var(--surface2); color: var(--muted); border: 1.5px solid var(--border);
+    }
+    .sbody {
+      background: var(--surface); border: 1px solid var(--border);
+      border-radius: 9px; padding: 1rem 1.2rem;
+    }
+    .stitle { font-weight: 600; color: #f0f6fc; font-size: .95rem; margin-bottom: .3rem; }
+    .sdesc  { color: var(--muted); font-size: .85rem; margin-bottom: .6rem; }
+    .checklist { display: flex; flex-direction: column; gap: .3rem; margin-top: .6rem; }
+    .ci { display: flex; align-items: flex-start; gap: .55rem; font-size: .83rem; }
+    .dot { width: 6px; height: 6px; border-radius: 50%; margin-top: .48rem; flex-shrink: 0; background: var(--muted); }
+
+    /* ── Code ── */
+    .code-wrap { margin-top: .8rem; }
+    .code-file {
+      background: var(--surface2); border: 1px solid var(--border);
+      border-bottom: none; border-radius: 7px 7px 0 0;
+      padding: .35rem .9rem; font-size: .75rem;
+      color: var(--muted); font-family: monospace;
+      display: inline-flex; align-items: center; gap: .5rem;
+    }
+    pre {
+      background: var(--code-bg); border: 1px solid var(--border);
+      border-radius: 0 7px 7px 7px;
+      padding: .9rem 1.1rem; font-size: .79rem;
+      overflow-x: auto; line-height: 1.65; margin: 0;
+    }
+    pre.standalone { border-radius: 7px; margin-top: .8rem; }
+    code { font-family: 'JetBrains Mono', 'Fira Code', ui-monospace, monospace; }
+
+    /* syntax */
+    .cm  { color: var(--muted); }
+    .kw  { color: #ff7b72; }
+    .str { color: #a5d6ff; }
+    .fn  { color: #d2a8ff; }
+    .num { color: #79c0ff; }
+    .key { color: #ffa657; }
+    .typ { color: #ffa657; }
+    .val { color: #3fb950; }
+
+    /* ── Alert ── */
+    .alert {
+      border-radius: 7px; padding: .8rem 1rem;
+      font-size: .83rem; display: flex; gap: .75rem;
+      align-items: flex-start; margin-top: .8rem;
+    }
+    .alert-y { background: #d2992211; border: 1px solid #d2992233; color: #e3b341; }
+    .alert-b { background: #58a6ff11; border: 1px solid #58a6ff33; color: #79c0ff; }
+    .alert-g { background: #3fb95011; border: 1px solid #3fb95033; color: #56d364; }
+
+    /* ── Route table ── */
+    table.routes { width: 100%; border-collapse: collapse; font-size: .85rem; }
+    table.routes th {
+      text-align: left; padding: .6rem .9rem;
+      background: var(--surface2); color: var(--muted);
+      font-size: .73rem; text-transform: uppercase; letter-spacing: .06em;
+    }
+    table.routes td { padding: .65rem .9rem; border-top: 1px solid var(--border); }
+    table.routes tr:hover td { background: var(--surface); }
+    .method {
+      display: inline-block; padding: .15rem .55rem;
+      border-radius: 4px; font-size: .72rem; font-weight: 700;
+      font-family: monospace;
+    }
+    .m-get  { background: #3fb95022; color: #56d364; }
+    .m-post { background: #58a6ff22; color: #79c0ff; }
+    .badge-pub  { background: #d2992222; color: #e3b341; border-radius: 4px; padding: .1rem .5rem; font-size: .7rem; font-weight: 600; }
+    .badge-prot { background: #bc8cff22; color: #d2a8ff; border-radius: 4px; padding: .1rem .5rem; font-size: .7rem; font-weight: 600; }
+
+    footer {
+      border-top: 1px solid var(--border);
+      padding-top: 1.4rem; color: var(--muted);
+      font-size: .78rem; text-align: center; margin-top: 3rem;
+    }
+    a { color: var(--accent); text-decoration: none; }
+  </style>
+</head>
+<body>
+<div class="container">
+
+  <!-- Header -->
+  <header>
+    <h1>Serverless API — Hono + JWT Auth <span class="pill pill-todo">Setup</span></h1>
+    <p class="sub">Serverless Framework 4 · Hono · JWT · CloudFront Signed Cookies · React consumption</p>
+    <p class="sub" style="margin-top:.3rem;font-size:.78rem;">Last updated: June 16, 2026 &nbsp;·&nbsp; Project: <code>geo-api</code></p>
+  </header>
+
+  <!-- Auth flow -->
+  <section>
+    <h2>Auth Flow</h2>
+    <div class="flow">
+      <div class="flow-label">Step A — Login (once per session)</div>
+      <div class="flow-row">
+        <div class="fbox">React App<small>VITE_API_KEY in .env</small></div>
+        <div class="farrow">→</div>
+        <div class="fbox hi-blue">POST /auth/token<small>{ apiKey }</small></div>
+        <div class="farrow">→</div>
+        <div class="fbox hi-purple">Lambda validates key<small>checks SSM /geo/api-keys</small></div>
+        <div class="farrow">→</div>
+        <div class="fbox hi-green">JWT token (8 hrs)<small>stored in memory</small></div>
+      </div>
+      <div class="fdivider"></div>
+      <div class="flow-label">Step B — Get CloudFront cookies (once per session)</div>
+      <div class="flow-row">
+        <div class="fbox">React App<small>Authorization: Bearer &lt;jwt&gt;</small></div>
+        <div class="farrow">→</div>
+        <div class="fbox hi-blue">GET /api/tiles/auth<small>protected route</small></div>
+        <div class="farrow">→</div>
+        <div class="fbox hi-orange">Lambda signs cookies<small>CF-Policy · CF-Sig · CF-KeyId</small></div>
+        <div class="farrow">→</div>
+        <div class="fbox hi-green">Cookies set on browser<small>for *.cloudfront.net</small></div>
+      </div>
+      <div class="fdivider"></div>
+      <div class="flow-label">Step C — FGB tile fetches (on every map move)</div>
+      <div class="flow-row">
+        <div class="fbox">flatgeobuf fetch<small>credentials: include</small></div>
+        <div class="farrow">→</div>
+        <div class="fbox hi-blue">CloudFront CDN<small>validates signed cookies</small></div>
+        <div class="farrow">→</div>
+        <div class="fbox hi-green">S3 .fgb Range request<small>viewport-only features</small></div>
+      </div>
+    </div>
+  </section>
+
+  <!-- Stack -->
+  <section>
+    <h2>Tech Stack</h2>
+    <div class="cards">
+      <div class="card">
+        <div class="ico">🔥</div>
+        <div class="ttl">Hono</div>
+        <div class="dsc">Lightweight web framework, runs natively on Lambda</div>
+        <div class="pkg">hono</div>
+      </div>
+      <div class="card">
+        <div class="ico">λ</div>
+        <div class="ttl">Serverless 4</div>
+        <div class="dsc">Deploys Lambda + API Gateway with one command</div>
+        <div class="pkg">serverless</div>
+      </div>
+      <div class="card">
+        <div class="ico">🔑</div>
+        <div class="ttl">JWT Auth</div>
+        <div class="dsc">API key → JWT exchange. Built-in Hono JWT middleware</div>
+        <div class="pkg">hono/jwt</div>
+      </div>
+      <div class="card">
+        <div class="ico">⚡</div>
+        <div class="ttl">esbuild</div>
+        <div class="dsc">Bundles TypeScript to single ESM file for Lambda</div>
+        <div class="pkg">serverless-esbuild</div>
+      </div>
+      <div class="card">
+        <div class="ico">🔐</div>
+        <div class="ttl">SSM Secrets</div>
+        <div class="dsc">JWT secret, API keys, CF private key stored securely</div>
+        <div class="pkg">aws ssm</div>
+      </div>
+      <div class="card">
+        <div class="ico">🌐</div>
+        <div class="ttl">CloudFront Signer</div>
+        <div class="dsc">Issues signed cookies for private .fgb tile access</div>
+        <div class="pkg">@aws-sdk/cloudfront-signer</div>
+      </div>
+    </div>
+  </section>
+
+  <!-- API Routes -->
+  <section>
+    <h2>API Routes</h2>
+    <table class="routes">
+      <thead>
+        <tr><th>Method</th><th>Path</th><th>Auth</th><th>Description</th></tr>
+      </thead>
+      <tbody>
+        <tr>
+          <td><span class="method m-get">GET</span></td>
+          <td><code>/health</code></td>
+          <td><span class="badge-pub">Public</span></td>
+          <td>Health check</td>
+        </tr>
+        <tr>
+          <td><span class="method m-post">POST</span></td>
+          <td><code>/auth/token</code></td>
+          <td><span class="badge-pub">Public</span></td>
+          <td>Exchange API key → JWT token (8 hrs)</td>
+        </tr>
+        <tr>
+          <td><span class="method m-get">GET</span></td>
+          <td><code>/api/tiles/auth</code></td>
+          <td><span class="badge-prot">Bearer JWT</span></td>
+          <td>Issues CloudFront signed cookies for .fgb access</td>
+        </tr>
+      </tbody>
+    </table>
+  </section>
+
+  <!-- Steps -->
+  <section>
+    <h2>Setup Steps</h2>
+    <div class="steps">
+
+      <!-- Step 1 -->
+      <div class="step">
+        <div class="snum">1</div>
+        <div class="sbody">
+          <div class="stitle">Create project & install packages</div>
+          <pre class="standalone"><code>mkdir /Users/balasahebraut/geo/geo-api && cd /Users/balasahebraut/geo/geo-api
+npm init -y
+
+<span class="cm"># Runtime deps</span>
+npm install hono @aws-sdk/cloudfront-signer
+
+<span class="cm"># Dev deps</span>
+npm install -D typescript @types/node esbuild serverless serverless-esbuild</code></pre>
+        </div>
+      </div>
+
+      <!-- Step 2 -->
+      <div class="step">
+        <div class="snum">2</div>
+        <div class="sbody">
+          <div class="stitle">tsconfig.json</div>
+          <div class="code-wrap">
+            <div class="code-file">📄 tsconfig.json</div>
+            <pre><code>{
+  <span class="key">"compilerOptions"</span>: {
+    <span class="key">"target"</span>:           <span class="str">"ES2022"</span>,
+    <span class="key">"module"</span>:           <span class="str">"ESNext"</span>,
+    <span class="key">"moduleResolution"</span>: <span class="str">"bundler"</span>,
+    <span class="key">"strict"</span>:           <span class="val">true</span>,
+    <span class="key">"outDir"</span>:           <span class="str">"dist"</span>
+  },
+  <span class="key">"include"</span>: [<span class="str">"src"</span>]
+}</code></pre>
+          </div>
+        </div>
+      </div>
+
+      <!-- Step 3 -->
+      <div class="step">
+        <div class="snum">3</div>
+        <div class="sbody">
+          <div class="stitle">serverless.yml</div>
+          <div class="code-wrap">
+            <div class="code-file">📄 serverless.yml</div>
+            <pre><code><span class="key">service</span>: geo-api
+<span class="key">frameworkVersion</span>: <span class="str">'4'</span>
+
+<span class="key">provider</span>:
+  <span class="key">name</span>: aws
+  <span class="key">runtime</span>: nodejs20.x
+  <span class="key">region</span>: ap-south-1
+  <span class="key">environment</span>:
+    <span class="key">JWT_SECRET</span>:     <span class="str">${ssm:/geo/jwt-secret}</span>
+    <span class="key">API_KEYS</span>:       <span class="str">${ssm:/geo/api-keys}</span>        <span class="cm"># comma-separated</span>
+    <span class="key">CF_KEY_PAIR_ID</span>: <span class="str">${ssm:/geo/cf-key-pair-id}</span>
+    <span class="key">CF_PRIVATE_KEY</span>: <span class="str">${ssm:/geo/cf-private-key}</span>
+    <span class="key">CF_DOMAIN</span>:      <span class="str">${ssm:/geo/cf-domain}</span>
+    <span class="key">ALLOWED_ORIGIN</span>: <span class="str">https://your-app.com</span>
+
+<span class="key">plugins</span>:
+  - serverless-esbuild
+
+<span class="key">custom</span>:
+  <span class="key">esbuild</span>:
+    <span class="key">bundle</span>:   <span class="val">true</span>
+    <span class="key">minify</span>:   <span class="val">true</span>
+    <span class="key">target</span>:   node20
+    <span class="key">platform</span>: node
+    <span class="key">format</span>:   esm
+
+<span class="key">functions</span>:
+  <span class="key">api</span>:
+    <span class="key">handler</span>: src/index.handler
+    <span class="key">events</span>:
+      - <span class="key">httpApi</span>:
+          <span class="key">path</span>:   /{proxy+}
+          <span class="key">method</span>: ANY
+      - <span class="key">httpApi</span>:
+          <span class="key">path</span>:   /
+          <span class="key">method</span>: ANY</code></pre>
+          </div>
+        </div>
+      </div>
+
+      <!-- Step 4 -->
+      <div class="step">
+        <div class="snum">4</div>
+        <div class="sbody">
+          <div class="stitle">src/index.ts — Hono app</div>
+          <div class="code-wrap">
+            <div class="code-file">📄 src/index.ts</div>
+            <pre><code><span class="kw">import</span> { Hono }              from <span class="str">'hono'</span>
+<span class="kw">import</span> { handle }            from <span class="str">'hono/aws-lambda'</span>
+<span class="kw">import</span> { cors }              from <span class="str">'hono/cors'</span>
+<span class="kw">import</span> { jwt, sign }        from <span class="str">'hono/jwt'</span>
+<span class="kw">import</span> { getSignedCookies } from <span class="str">'@aws-sdk/cloudfront-signer'</span>
+
+<span class="kw">const</span> app = <span class="kw">new</span> <span class="fn">Hono</span>()
+
+<span class="cm">// ── CORS ─────────────────────────────────────────────────────────</span>
+app.<span class="fn">use</span>(<span class="str">'*'</span>, <span class="fn">cors</span>({
+  origin:       process.env.ALLOWED_ORIGIN ?? <span class="str">'*'</span>,
+  credentials:  <span class="val">true</span>,
+  allowHeaders: [<span class="str">'Authorization'</span>, <span class="str">'Content-Type'</span>],
+}))
+
+<span class="cm">// ── PUBLIC: exchange API key → JWT ───────────────────────────────</span>
+app.<span class="fn">post</span>(<span class="str">'/auth/token'</span>, <span class="kw">async</span> (c) => {
+  <span class="kw">const</span> { apiKey } = <span class="kw">await</span> c.req.<span class="fn">json</span>&lt;{ apiKey: <span class="typ">string</span> }&gt;()
+  <span class="kw">const</span> valid = (process.env.API_KEYS ?? <span class="str">''</span>)
+    .<span class="fn">split</span>(<span class="str">','</span>).<span class="fn">map</span>(k => k.<span class="fn">trim</span>())
+
+  <span class="kw">if</span> (!apiKey || !valid.<span class="fn">includes</span>(apiKey))
+    <span class="kw">return</span> c.<span class="fn">json</span>({ error: <span class="str">'Invalid API key'</span> }, <span class="num">401</span>)
+
+  <span class="kw">const</span> token = <span class="kw">await</span> <span class="fn">sign</span>(
+    {
+      sub: <span class="str">'geo-client'</span>,
+      iat: Math.<span class="fn">floor</span>(Date.<span class="fn">now</span>() / <span class="num">1000</span>),
+      exp: Math.<span class="fn">floor</span>(Date.<span class="fn">now</span>() / <span class="num">1000</span>) + <span class="num">60 * 60 * 8</span>,
+    },
+    process.env.JWT_SECRET!
+  )
+
+  <span class="kw">return</span> c.<span class="fn">json</span>({ token, expiresIn: <span class="num">28800</span> })
+})
+
+<span class="cm">// ── PROTECTED: all /api/* require Bearer JWT ─────────────────────</span>
+app.<span class="fn">use</span>(<span class="str">'/api/*'</span>, <span class="fn">jwt</span>({ secret: process.env.JWT_SECRET! }))
+
+<span class="cm">// GET /api/tiles/auth → CloudFront signed cookies</span>
+app.<span class="fn">get</span>(<span class="str">'/api/tiles/auth'</span>, <span class="kw">async</span> (c) => {
+  <span class="kw">const</span> expiry = Math.<span class="fn">floor</span>(Date.<span class="fn">now</span>() / <span class="num">1000</span>) + <span class="num">60 * 60 * 8</span>
+
+  <span class="kw">const</span> cookies = <span class="fn">getSignedCookies</span>({
+    keyPairId:  process.env.CF_KEY_PAIR_ID!,
+    privateKey: process.env.CF_PRIVATE_KEY!,
+    policy: JSON.<span class="fn">stringify</span>({
+      Statement: [{
+        Resource:  <span class="str">`https://${process.env.CF_DOMAIN}/fgb/*`</span>,
+        Condition: { DateLessThan: { <span class="str">'AWS:EpochTime'</span>: expiry } },
+      }],
+    }),
+  })
+
+  c.<span class="fn">header</span>(<span class="str">'Set-Cookie'</span>, <span class="str">`CloudFront-Policy=${cookies[<span class="str">'CloudFront-Policy'</span>]}; Path=/; Secure; SameSite=None`</span>)
+  c.<span class="fn">header</span>(<span class="str">'Set-Cookie'</span>, <span class="str">`CloudFront-Signature=${cookies[<span class="str">'CloudFront-Signature'</span>]}; Path=/; Secure; SameSite=None`</span>)
+  c.<span class="fn">header</span>(<span class="str">'Set-Cookie'</span>, <span class="str">`CloudFront-Key-Pair-Id=${cookies[<span class="str">'CloudFront-Key-Pair-Id'</span>]}; Path=/; Secure; SameSite=None`</span>)
+  <span class="kw">return</span> c.<span class="fn">json</span>({ ok: <span class="val">true</span> })
+})
+
+<span class="cm">// health check</span>
+app.<span class="fn">get</span>(<span class="str">'/health'</span>, (c) => c.<span class="fn">json</span>({ status: <span class="str">'ok'</span> }))
+
+<span class="kw">export const</span> handler = <span class="fn">handle</span>(app)</code></pre>
+          </div>
+        </div>
+      </div>
+
+      <!-- Step 5 -->
+      <div class="step">
+        <div class="snum">5</div>
+        <div class="sbody">
+          <div class="stitle">Store secrets in AWS SSM</div>
+          <div class="sdesc">Run once before deploy. These are read at Lambda runtime via <code>${ssm:...}</code> in serverless.yml.</div>
+          <pre class="standalone"><code><span class="cm"># JWT signing secret (random 32-byte base64)</span>
+aws ssm put-parameter --name /geo/jwt-secret \
+  --type SecureString \
+  --value <span class="str">"$(openssl rand -base64 32)"</span>
+
+<span class="cm"># Pre-shared API keys your React app will send</span>
+aws ssm put-parameter --name /geo/api-keys \
+  --type SecureString \
+  --value <span class="str">"key-abc123,key-xyz789"</span>
+
+<span class="cm"># CloudFront key pair (from AWS console → Security Credentials)</span>
+aws ssm put-parameter --name /geo/cf-key-pair-id \
+  --type String --value <span class="str">"APKAXXXXXXXXXX"</span>
+
+aws ssm put-parameter --name /geo/cf-private-key \
+  --type SecureString \
+  --value <span class="str">"$(cat cloudfront-private-key.pem)"</span>
+
+aws ssm put-parameter --name /geo/cf-domain \
+  --type String --value <span class="str">"d1234abcd.cloudfront.net"</span></code></pre>
+          <div class="alert alert-y">
+            <span>⚠️</span>
+            <span>The CloudFront private key is from <strong>AWS Console → Account menu → Security Credentials → CloudFront key pairs → Create</strong>. Download it once — AWS won't let you re-download it.</span>
+          </div>
+        </div>
+      </div>
+
+      <!-- Step 6 -->
+      <div class="step">
+        <div class="snum">6</div>
+        <div class="sbody">
+          <div class="stitle">Deploy</div>
+          <pre class="standalone"><code>cd /Users/balasahebraut/geo/geo-api
+
+npx serverless deploy
+
+<span class="cm"># Output will show the API Gateway URL, e.g.:</span>
+<span class="cm"># endpoints:</span>
+<span class="cm">#   ANY - https://abc123.execute-api.ap-south-1.amazonaws.com/{proxy+}</span></code></pre>
+          <div class="checklist">
+            <div class="ci"><span class="dot"></span>Note the API Gateway base URL from the output</div>
+            <div class="ci"><span class="dot"></span>Test health: <code>curl https://&lt;url&gt;/health</code></div>
+            <div class="ci"><span class="dot"></span>Test auth: <code>curl -X POST https://&lt;url&gt;/auth/token -d '{"apiKey":"key-abc123"}' -H 'Content-Type: application/json'</code></div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Step 7 -->
+      <div class="step">
+        <div class="snum">7</div>
+        <div class="sbody">
+          <div class="stitle">React — <code>src/hooks/useAuth.ts</code></div>
+          <div class="sdesc">Token is stored in memory (not localStorage) so it's cleared on refresh. Auto-fires an event when JWT expires so the app can prompt re-login.</div>
+          <div class="code-wrap">
+            <div class="code-file">📄 src/hooks/useAuth.ts</div>
+            <pre><code><span class="kw">const</span> API = import.meta.env.VITE_API_URL
+
+<span class="kw">let</span> _token: <span class="typ">string</span> | <span class="val">null</span> = <span class="val">null</span>          <span class="cm">// in-memory only</span>
+<span class="kw">let</span> _expiry: <span class="typ">number</span>  = <span class="num">0</span>
+
+<span class="kw">export async function</span> <span class="fn">login</span>(apiKey: <span class="typ">string</span>) {
+  <span class="kw">const</span> res = <span class="kw">await</span> <span class="fn">fetch</span>(<span class="str">`${API}/auth/token`</span>, {
+    method:  <span class="str">'POST'</span>,
+    headers: { <span class="str">'Content-Type'</span>: <span class="str">'application/json'</span> },
+    body:    JSON.<span class="fn">stringify</span>({ apiKey }),
+  })
+  <span class="kw">if</span> (!res.ok) <span class="kw">throw new</span> <span class="fn">Error</span>(<span class="str">'Auth failed'</span>)
+
+  <span class="kw">const</span> { token, expiresIn } = <span class="kw">await</span> res.<span class="fn">json</span>()
+  _token  = token
+  _expiry = Date.<span class="fn">now</span>() + expiresIn * <span class="num">1000</span> - <span class="num">60_000</span>   <span class="cm">// 1 min early refresh</span>
+  <span class="kw">return</span> token
+}
+
+<span class="kw">export function</span> <span class="fn">isLoggedIn</span>() {
+  <span class="kw">return</span> !!_token && Date.<span class="fn">now</span>() < _expiry
+}
+
+<span class="cm">// Authenticated fetch — attaches Bearer, refreshes on 401</span>
+<span class="kw">export async function</span> <span class="fn">apiFetch</span>(path: <span class="typ">string</span>, init?: RequestInit) {
+  <span class="kw">const</span> res = <span class="kw">await</span> <span class="fn">fetch</span>(<span class="str">`${API}${path}`</span>, {
+    ...init,
+    credentials: <span class="str">'include'</span>,
+    headers: {
+      ...init?.headers,
+      <span class="str">'Authorization'</span>: <span class="str">`Bearer ${_token}`</span>,
+    },
+  })
+
+  <span class="kw">if</span> (res.status === <span class="num">401</span>) {
+    _token = <span class="val">null</span>
+    window.<span class="fn">dispatchEvent</span>(<span class="kw">new</span> <span class="fn">Event</span>(<span class="str">'auth:expired'</span>))
+  }
+
+  <span class="kw">return</span> res
+}</code></pre>
+          </div>
+        </div>
+      </div>
+
+      <!-- Step 8 -->
+      <div class="step">
+        <div class="snum">8</div>
+        <div class="sbody">
+          <div class="stitle">React — wire auth into map component</div>
+          <div class="sdesc">Replace the bare <code>fetch('/fgb/...')</code> with auth-aware loading. One <code>useEffect</code> on mount handles login + cookie fetch before any tile requests fire.</div>
+          <div class="code-wrap">
+            <div class="code-file">📄 src/UkraineLayerMap.tsx — add at top of component</div>
+            <pre><code><span class="kw">import</span> { login, apiFetch, isLoggedIn } from <span class="str">'./hooks/useAuth'</span>
+
+<span class="cm">// inside UkraineLayerMap(), before other useEffects:</span>
+useEffect(<span class="fn">() =></span> {
+  <span class="kw">async function</span> <span class="fn">initAuth</span>() {
+    <span class="kw">if</span> (!<span class="fn">isLoggedIn</span>())
+      <span class="kw">await</span> <span class="fn">login</span>(import.meta.env.VITE_API_KEY)
+
+    <span class="kw">await</span> <span class="fn">apiFetch</span>(<span class="str">'/api/tiles/auth'</span>)
+  }
+  <span class="fn">initAuth</span>()
+
+  <span class="cm">// re-login if JWT expires mid-session</span>
+  <span class="kw">const</span> <span class="fn">onExpired</span> = <span class="kw">async</span> () => {
+    <span class="kw">await</span> <span class="fn">login</span>(import.meta.env.VITE_API_KEY)
+    <span class="kw">await</span> <span class="fn">apiFetch</span>(<span class="str">'/api/tiles/auth'</span>)
+  }
+  window.<span class="fn">addEventListener</span>(<span class="str">'auth:expired'</span>, onExpired)
+  <span class="kw">return</span> () => window.<span class="fn">removeEventListener</span>(<span class="str">'auth:expired'</span>, onExpired)
+}, [])</code></pre>
+          </div>
+        </div>
+      </div>
+
+      <!-- Step 9 -->
+      <div class="step">
+        <div class="snum">9</div>
+        <div class="sbody">
+          <div class="stitle">Vite .env files</div>
+          <div class="code-wrap">
+            <div class="code-file">📄 .env (vite project root — git-ignored)</div>
+            <pre><code>VITE_API_URL=https://abc123.execute-api.ap-south-1.amazonaws.com
+VITE_API_KEY=key-abc123</code></pre>
+          </div>
+          <div class="alert alert-b" style="margin-top:.8rem">
+            <span>💡</span>
+            <span>Add <code>.env</code> to <code>.gitignore</code>. Commit a <code>.env.example</code> with placeholder values instead.</span>
+          </div>
+          <div class="code-wrap" style="margin-top:.8rem">
+            <div class="code-file">📄 .env.example</div>
+            <pre><code>VITE_API_URL=https://&lt;api-gateway-id&gt;.execute-api.&lt;region&gt;.amazonaws.com
+VITE_API_KEY=your-api-key-here</code></pre>
+          </div>
+        </div>
+      </div>
+
+      <!-- Step 10 -->
+      <div class="step">
+        <div class="snum">10</div>
+        <div class="sbody">
+          <div class="stitle">Test end-to-end</div>
+          <div class="checklist">
+            <div class="ci"><span class="dot"></span>
+              <code>curl https://&lt;url&gt;/health</code> → <code>{"status":"ok"}</code>
+            </div>
+            <div class="ci"><span class="dot"></span>
+              Login: <code>curl -X POST .../auth/token -d '{"apiKey":"key-abc123"}' -H 'Content-Type: application/json'</code>
+              → get JWT
+            </div>
+            <div class="ci"><span class="dot"></span>
+              Protected with token: <code>curl .../api/tiles/auth -H 'Authorization: Bearer &lt;jwt&gt;'</code>
+              → get 3 Set-Cookie headers
+            </div>
+            <div class="ci"><span class="dot"></span>
+              Without token: <code>curl .../api/tiles/auth</code> → <code>401 Unauthorized</code>
+            </div>
+            <div class="ci"><span class="dot"></span>
+              Start Vite dev server → map loads → check DevTools Network for <code>/auth/token</code> then <code>/api/tiles/auth</code>
+            </div>
+            <div class="ci"><span class="dot"></span>
+              FGB fetches to CloudFront should have <code>CloudFront-Policy</code> cookie attached
+            </div>
+          </div>
+          <div class="alert alert-g" style="margin-top:.8rem">
+            <span>✅</span>
+            <span>If you see <code>CloudFront-Policy</code> cookie on tile fetches in DevTools, the full chain is working.</span>
+          </div>
+        </div>
+      </div>
+
+    </div>
+  </section>
+
+  <!-- Project structure -->
+  <section>
+    <h2>Project Structure</h2>
+    <pre class="standalone"><code>geo/
+├── vite-project/          <span class="cm"># React frontend</span>
+│   ├── src/
+│   │   ├── hooks/
+│   │   │   └── useAuth.ts         <span class="cm"># login + apiFetch</span>
+│   │   └── UkraineLayerMap.tsx    <span class="cm"># map component</span>
+│   └── .env                       <span class="cm"># VITE_API_URL, VITE_API_KEY</span>
+│
+└── geo-api/               <span class="cm"># Serverless backend</span>
+    ├── src/
+    │   └── index.ts               <span class="cm"># Hono app + handler</span>
+    ├── serverless.yml
+    └── tsconfig.json</code></pre>
+  </section>
+
+  <footer>
+    Generated June 16, 2026 &nbsp;·&nbsp; geo/vite-project/docs/serverless-hono-auth.html
+  </footer>
+
+</div>
+</body>
+</html>

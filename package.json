@@ -12,6 +12,7 @@
   "dependencies": {
     "flatgeobuf": "^4.4.0",
     "leaflet": "^1.9.4",
+    "mapbox-gl": "^3.24.1",
     "maplibre-gl": "^5.24.0",
     "pmtiles": "^4.4.1",
     "react": "^19.2.6",

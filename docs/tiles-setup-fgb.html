@@ -1,0 +1,737 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>FlatGeobuf Setup — Project Plan</title>
+  <style>
+    :root {
+      --bg: #0d1117;
+      --surface: #161b22;
+      --surface2: #1c2128;
+      --border: #30363d;
+      --accent: #58a6ff;
+      --accent2: #3fb950;
+      --yellow: #d29922;
+      --red: #f85149;
+      --purple: #bc8cff;
+      --text: #c9d1d9;
+      --muted: #8b949e;
+      --code-bg: #0d1117;
+    }
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    body {
+      font-family: -apple-system, 'Segoe UI', system-ui, sans-serif;
+      background: var(--bg);
+      color: var(--text);
+      line-height: 1.7;
+      padding: 2rem 1rem;
+    }
+    .container { max-width: 980px; margin: 0 auto; }
+
+    /* ── Header ── */
+    header { border-bottom: 1px solid var(--border); padding-bottom: 1.5rem; margin-bottom: 2.5rem; }
+    header h1 { font-size: 1.75rem; color: #f0f6fc; letter-spacing: -.02em; }
+    header .sub { color: var(--muted); font-size: .9rem; margin-top: .4rem; }
+    .pill {
+      display: inline-flex; align-items: center; gap: .35rem;
+      padding: .2rem .75rem; border-radius: 999px;
+      font-size: .72rem; font-weight: 600; margin-left: .5rem;
+    }
+    .pill-active { background: #d2992222; color: var(--yellow); border: 1px solid #d2992244; }
+    .pill-done   { background: #3fb95022; color: var(--accent2); border: 1px solid #3fb95044; }
+    .pill-todo   { background: #58a6ff22; color: var(--accent);  border: 1px solid #58a6ff44; }
+
+    /* ── Section headings ── */
+    h2 {
+      font-size: 1rem; color: var(--muted);
+      text-transform: uppercase; letter-spacing: .1em;
+      margin-bottom: 1.1rem;
+      display: flex; align-items: center; gap: .7rem;
+    }
+    h2::after { content: ''; flex: 1; height: 1px; background: var(--border); }
+    section { margin-bottom: 3rem; }
+
+    /* ── Decision banner ── */
+    .decision-banner {
+      background: linear-gradient(135deg, #1f2d1f 0%, #161b22 100%);
+      border: 1px solid #3fb95033;
+      border-left: 3px solid var(--accent2);
+      border-radius: 8px;
+      padding: 1.1rem 1.3rem;
+      display: grid;
+      grid-template-columns: auto 1fr;
+      gap: .8rem 1.1rem;
+      align-items: start;
+    }
+    .decision-banner .icon { font-size: 1.4rem; }
+    .decision-banner h3 { color: #f0f6fc; font-size: .97rem; margin-bottom: .2rem; }
+    .decision-banner p  { color: var(--muted); font-size: .85rem; }
+    .vs-table {
+      margin-top: 1rem;
+      width: 100%;
+      border-collapse: collapse;
+      font-size: .83rem;
+    }
+    .vs-table th {
+      padding: .5rem .9rem;
+      background: var(--surface2);
+      color: var(--muted);
+      text-transform: uppercase;
+      font-size: .72rem;
+      letter-spacing: .06em;
+      text-align: left;
+    }
+    .vs-table td { padding: .55rem .9rem; border-top: 1px solid var(--border); }
+    .vs-table .win { color: var(--accent2); font-weight: 600; }
+    .vs-table .lose { color: var(--muted); text-decoration: line-through; }
+
+    /* ── Why FGB box ── */
+    .why-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(210px, 1fr));
+      gap: .9rem;
+    }
+    .why-card {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      padding: 1rem 1.1rem;
+    }
+    .why-card .ico { font-size: 1.2rem; margin-bottom: .45rem; }
+    .why-card .ttl { font-size: .88rem; font-weight: 600; color: #f0f6fc; }
+    .why-card .dsc { font-size: .8rem; color: var(--muted); margin-top: .2rem; }
+
+    /* ── Layer table ── */
+    table.layers {
+      width: 100%; border-collapse: collapse; font-size: .87rem;
+    }
+    table.layers th {
+      text-align: left; padding: .65rem 1rem;
+      background: var(--surface2); color: var(--muted);
+      font-size: .73rem; text-transform: uppercase; letter-spacing: .06em;
+    }
+    table.layers td { padding: .7rem 1rem; border-top: 1px solid var(--border); }
+    table.layers tr:hover td { background: var(--surface); }
+    .tag {
+      display: inline-block; padding: .15rem .55rem;
+      border-radius: 4px; font-size: .73rem; font-weight: 600;
+    }
+    .tag-blue   { background: #58a6ff22; color: #79c0ff; }
+    .tag-purple { background: #bc8cff22; color: #d2a8ff; }
+    .tag-green  { background: #3fb95022; color: #56d364; }
+
+    /* ── Arch ── */
+    .arch {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 10px;
+      padding: 1.5rem;
+    }
+    .arch-label { color: var(--muted); font-size: .75rem; text-transform: uppercase; letter-spacing: .1em; margin-bottom: 1rem; }
+    .arch-row {
+      display: flex; align-items: center; flex-wrap: wrap;
+      gap: .5rem; margin-bottom: .9rem;
+    }
+    .arch-row:last-child { margin-bottom: 0; }
+    .arch-box {
+      background: var(--surface2);
+      border: 1px solid var(--border);
+      border-radius: 7px;
+      padding: .45rem 1rem;
+      font-size: .82rem; font-weight: 500;
+    }
+    .arch-box small { display: block; color: var(--muted); font-size: .7rem; font-weight: 400; }
+    .arch-box.hi-blue   { border-color: #58a6ff55; color: #79c0ff; }
+    .arch-box.hi-green  { border-color: #3fb95055; color: #56d364; }
+    .arch-box.hi-yellow { border-color: #d2992255; color: #e3b341; }
+    .arch-arrow { color: var(--muted); font-size: .95rem; }
+    .arch-divider { width: 100%; height: 1px; background: var(--border); margin: .7rem 0; }
+
+    /* ── Steps ── */
+    .steps { display: flex; flex-direction: column; gap: 1rem; }
+    .step { display: grid; grid-template-columns: 2.4rem 1fr; gap: .9rem; align-items: start; }
+    .step-num {
+      width: 2.4rem; height: 2.4rem;
+      border-radius: 50%;
+      display: flex; align-items: center; justify-content: center;
+      font-weight: 700; font-size: .85rem; flex-shrink: 0;
+    }
+    .sn-done   { background: #3fb95022; color: var(--accent2); border: 1.5px solid #3fb95055; }
+    .sn-active { background: #d2992222; color: var(--yellow);  border: 1.5px solid #d2992255; }
+    .sn-todo   { background: var(--surface2); color: var(--muted); border: 1.5px solid var(--border); }
+    .step-body {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 9px;
+      padding: 1rem 1.2rem;
+    }
+    .step-body.active-bd { border-color: #d2992244; }
+    .step-title { font-weight: 600; color: #f0f6fc; font-size: .94rem; margin-bottom: .3rem; }
+    .step-desc  { color: var(--muted); font-size: .85rem; }
+    .checklist  { margin-top: .75rem; display: flex; flex-direction: column; gap: .35rem; }
+    .ci { display: flex; align-items: flex-start; gap: .6rem; font-size: .83rem; }
+    .dot { width: 6px; height: 6px; border-radius: 50%; margin-top: .48rem; flex-shrink: 0; }
+    .dot-g { background: var(--accent2); }
+    .dot-y { background: var(--yellow); }
+    .dot-m { background: var(--muted); }
+
+    /* ── Code ── */
+    pre {
+      background: var(--code-bg);
+      border: 1px solid var(--border);
+      border-radius: 7px;
+      padding: .9rem 1.1rem;
+      font-size: .8rem;
+      overflow-x: auto;
+      margin-top: .8rem;
+      line-height: 1.65;
+    }
+    code { font-family: 'JetBrains Mono', 'Fira Code', ui-monospace, monospace; }
+    .cm  { color: var(--muted); }
+    .kw  { color: #ff7b72; }
+    .str { color: #a5d6ff; }
+    .fn  { color: #d2a8ff; }
+    .num { color: #79c0ff; }
+    .op  { color: #ffa657; }
+
+    /* ── Alert ── */
+    .alert {
+      border-radius: 7px; padding: .85rem 1rem;
+      font-size: .83rem; display: flex; gap: .75rem;
+      align-items: flex-start; margin-top: .8rem;
+    }
+    .alert-y { background: #d2992211; border: 1px solid #d2992233; color: #e3b341; }
+    .alert-b { background: #58a6ff11; border: 1px solid #58a6ff33; color: #79c0ff; }
+    .alert-g { background: #3fb95011; border: 1px solid #3fb95033; color: #56d364; }
+
+    /* ── Progress ── */
+    .progress-wrap {
+      background: var(--surface); border: 1px solid var(--border);
+      border-radius: 9px; padding: 1.2rem 1.4rem;
+    }
+    .progress-stats { display: flex; gap: 2.5rem; margin-bottom: 1rem; }
+    .stat-num { font-size: 1.9rem; font-weight: 700; }
+    .stat-lbl { font-size: .75rem; color: var(--muted); }
+    .progress-bar-bg {
+      background: var(--surface2); border-radius: 999px;
+      height: 7px; overflow: hidden;
+    }
+    .progress-bar-fill {
+      height: 100%;
+      background: linear-gradient(90deg, var(--accent2), var(--accent));
+      border-radius: 999px;
+      width: 12%;
+    }
+    .progress-note { margin-top: .5rem; color: var(--muted); font-size: .79rem; }
+
+    /* ── Timeline estimate ── */
+    .timeline {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(180px, 1fr));
+      gap: .8rem;
+    }
+    .tl-card {
+      background: var(--surface); border: 1px solid var(--border);
+      border-radius: 8px; padding: .9rem 1rem;
+      text-align: center;
+    }
+    .tl-day  { font-size: 1.4rem; font-weight: 700; }
+    .tl-name { font-size: .8rem; font-weight: 600; color: #f0f6fc; margin-top: .2rem; }
+    .tl-desc { font-size: .75rem; color: var(--muted); margin-top: .2rem; }
+    .tl-card.tl-choice { border-color: #3fb95044; }
+    .tl-card.tl-choice .tl-day { color: var(--accent2); }
+
+    footer {
+      border-top: 1px solid var(--border);
+      padding-top: 1.4rem; color: var(--muted);
+      font-size: .78rem; text-align: center; margin-top: 3rem;
+    }
+  </style>
+</head>
+<body>
+<div class="container">
+
+  <!-- Header -->
+  <header>
+    <h1>Geo Tiles — FlatGeobuf Setup <span class="pill pill-active">In Progress</span></h1>
+    <p class="sub">Private S3 · CloudFront Signed Cookies · Lambda Auth · React streaming .fgb</p>
+    <p class="sub" style="margin-top:.3rem; font-size:.78rem;">Last updated: June 16, 2026 &nbsp;·&nbsp; Revised: PMTiles → FlatGeobuf (.fgb)</p>
+  </header>
+
+  <!-- Decision -->
+  <section>
+    <h2>Architecture Decision</h2>
+    <div class="decision-banner">
+      <div class="icon">✅</div>
+      <div>
+        <h3>Chose: FlatGeobuf (.fgb) + CloudFront Signed Cookies</h3>
+        <p>FlatGeobuf supports HTTP range requests natively — the browser only fetches features inside the current map viewport. No tile server needed, one file per layer, streams directly from S3 via CloudFront.</p>
+
+        <table class="vs-table" style="margin-top:.9rem;">
+          <thead><tr><th>Approach</th><th>Effort</th><th>Large files (10–100 MB+)</th><th>Long-term</th></tr></thead>
+          <tbody>
+            <tr>
+              <td>S3 Presigned URL</td>
+              <td>~1 day</td>
+              <td class="lose">Whole file download each time</td>
+              <td class="lose">Not ideal</td>
+            </tr>
+            <tr>
+              <td>CloudFront Signed Cookie</td>
+              <td>~2–3 days</td>
+              <td class="win">Range requests → viewport-only fetch</td>
+              <td class="win">✓ Chosen</td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+  </section>
+
+  <!-- Why FlatGeobuf -->
+  <section>
+    <h2>Why FlatGeobuf</h2>
+    <div class="why-grid">
+      <div class="why-card">
+        <div class="ico">📦</div>
+        <div class="ttl">One file per layer</div>
+        <div class="dsc">No tiling, no tippecanoe, no PMTiles complexity. Just ogr2ogr → .fgb.</div>
+      </div>
+      <div class="why-card">
+        <div class="ico">🔎</div>
+        <div class="ttl">Spatial index built-in</div>
+        <div class="dsc">Hilbert R-tree index packed into the file. Browser fetches only bbox-matching features.</div>
+      </div>
+      <div class="why-card">
+        <div class="ico">⚡</div>
+        <div class="ttl">HTTP Range requests</div>
+        <div class="dsc">Works with CloudFront out of the box. No server-side tile rendering needed.</div>
+      </div>
+      <div class="why-card">
+        <div class="ico">🌊</div>
+        <div class="ttl">Streaming in browser</div>
+        <div class="dsc">flatgeobuf npm package streams features as they arrive — fast first paint.</div>
+      </div>
+      <div class="why-card">
+        <div class="ico">🗺️</div>
+        <div class="ttl">MapLibre compatible</div>
+        <div class="dsc">Feed fetched features into a GeoJSON source — update on every map move.</div>
+      </div>
+      <div class="why-card">
+        <div class="ico">💾</div>
+        <div class="ttl">Handles large files</div>
+        <div class="dsc">10–100 MB .fgb files work fine. Only the visible portion is ever transferred.</div>
+      </div>
+    </div>
+  </section>
+
+  <!-- Layers -->
+  <section>
+    <h2>Data Layers</h2>
+    <table class="layers">
+      <thead>
+        <tr>
+          <th>Layer</th><th>Type</th><th>Size</th><th>File</th><th>Show at Zoom</th><th>Render</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr>
+          <td><strong>Hex Grid</strong></td>
+          <td><span class="tag tag-blue">Vector Polygon</span></td>
+          <td>10×10 = 100 cells</td>
+          <td><code>hex-grid.fgb</code></td>
+          <td>3 → 10</td>
+          <td><code>fill</code></td>
+        </tr>
+        <tr>
+          <td><strong>TPR Grid</strong></td>
+          <td><span class="tag tag-purple">Raster Grid</span></td>
+          <td>100×100 = 10 K cells</td>
+          <td><code>tpr.fgb</code></td>
+          <td>5 → 12</td>
+          <td><code>fill</code> + color scale</td>
+        </tr>
+        <tr>
+          <td><strong>TPP Layer</strong></td>
+          <td><span class="tag tag-green">Point / Polygon</span></td>
+          <td>2–4 per country</td>
+          <td><code>tpp.fgb</code></td>
+          <td>0 → 14</td>
+          <td><code>circle</code> or <code>fill</code></td>
+        </tr>
+      </tbody>
+    </table>
+  </section>
+
+  <!-- Architecture -->
+  <section>
+    <h2>Architecture Flow</h2>
+    <div class="arch">
+      <div class="arch-label">Auth flow (once on app load)</div>
+      <div class="arch-row">
+        <div class="arch-box">React App<small>on mount</small></div>
+        <div class="arch-arrow">→</div>
+        <div class="arch-box hi-yellow">Lambda<small>GET /tiles/auth</small></div>
+        <div class="arch-arrow">→</div>
+        <div class="arch-box hi-yellow">Signed Cookies<small>CF-Policy · CF-Signature · CF-Key-Pair-Id</small></div>
+        <div class="arch-arrow">→</div>
+        <div class="arch-box">Browser stores cookies<small>8 hr expiry</small></div>
+      </div>
+
+      <div class="arch-divider"></div>
+      <div class="arch-label">Tile fetch flow (on every map move / zoom)</div>
+
+      <div class="arch-row">
+        <div class="arch-box">MapLibre<small>moveend / zoomend</small></div>
+        <div class="arch-arrow">→</div>
+        <div class="arch-box hi-blue">flatgeobuf JS<small>bbox spatial filter</small></div>
+        <div class="arch-arrow">→</div>
+        <div class="arch-box hi-blue">CloudFront<small>Range request + cookie check</small></div>
+        <div class="arch-arrow">→</div>
+        <div class="arch-box">S3 (private)<small>OAC — no public access</small></div>
+      </div>
+      <div class="arch-row" style="margin-top:.5rem;">
+        <div class="arch-box hi-green">Features streamed to GeoJSON source<small>MapLibre re-renders only visible features</small></div>
+      </div>
+    </div>
+  </section>
+
+  <!-- Timeline -->
+  <section>
+    <h2>Time Estimate</h2>
+    <div class="timeline">
+      <div class="tl-card">
+        <div class="tl-day" style="color:var(--muted)">½ day</div>
+        <div class="tl-name">GeoJSON → FGB</div>
+        <div class="tl-desc">ogr2ogr conversion + S3 upload</div>
+      </div>
+      <div class="tl-card">
+        <div class="tl-day" style="color:var(--muted)">½ day</div>
+        <div class="tl-name">S3 + CloudFront OAC</div>
+        <div class="tl-desc">Private bucket + distribution setup</div>
+      </div>
+      <div class="tl-card tl-choice">
+        <div class="tl-day">2–3 days</div>
+        <div class="tl-name">Lambda Signed Cookies</div>
+        <div class="tl-desc">Auth endpoint + key pair + SSM</div>
+      </div>
+      <div class="tl-card">
+        <div class="tl-day" style="color:var(--muted)">1 day</div>
+        <div class="tl-name">React Integration</div>
+        <div class="tl-desc">flatgeobuf + MapLibre + zoom logic</div>
+      </div>
+    </div>
+    <div class="alert alert-g" style="margin-top:.9rem;">
+      <span>⏱</span>
+      <span><strong>Total estimate: ~4–5 days.</strong> CloudFront signed cookie setup is the heaviest part (key pair generation, SSM, Lambda, cookie policy). Everything else is quick.</span>
+    </div>
+  </section>
+
+  <!-- Steps -->
+  <section>
+    <h2>Steps — Where We Are &amp; What's Left</h2>
+    <div class="steps">
+
+      <!-- Step 1 DONE -->
+      <div class="step">
+        <div class="step-num sn-done">✓</div>
+        <div class="step-body">
+          <div class="step-title">Step 1 — Architecture Decision <span class="pill pill-done">Done</span></div>
+          <div class="step-desc">Chose FlatGeobuf + CloudFront signed cookies over S3 presigned URLs. Decided on Serverless 4 for Lambda, MapLibre GL for React.</div>
+          <div class="checklist">
+            <div class="ci"><span class="dot dot-g"></span>Layers identified: hex-grid, TPR, TPP</div>
+            <div class="ci"><span class="dot dot-g"></span>Format chosen: .fgb (FlatGeobuf)</div>
+            <div class="ci"><span class="dot dot-g"></span>Auth strategy: CloudFront signed cookies via Lambda</div>
+            <div class="ci"><span class="dot dot-g"></span>Rejected: S3 presigned URLs (no range request support for large files)</div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Step 2 ACTIVE -->
+      <div class="step">
+        <div class="step-num sn-active">2</div>
+        <div class="step-body active-bd">
+          <div class="step-title">Step 2 — Convert GeoJSON → .fgb <span class="pill pill-active">Current</span></div>
+          <div class="step-desc">Use GDAL's <code>ogr2ogr</code> to convert each GeoJSON into a spatially indexed FlatGeobuf file.</div>
+          <div class="checklist">
+            <div class="ci"><span class="dot dot-y"></span>Install GDAL: <code>brew install gdal</code></div>
+            <div class="ci"><span class="dot dot-m"></span>Convert hex-grid.geojson → hex-grid.fgb</div>
+            <div class="ci"><span class="dot dot-m"></span>Convert tpr.geojson → tpr.fgb</div>
+            <div class="ci"><span class="dot dot-m"></span>Convert tpp.geojson → tpp.fgb</div>
+            <div class="ci"><span class="dot dot-m"></span>Verify files with ogrinfo or pmtiles.io viewer</div>
+          </div>
+          <pre><code><span class="cm"># Install GDAL</span>
+brew install gdal
+
+<span class="cm"># Convert each layer (-nlt PROMOTE_TO_MULTI ensures compatibility)</span>
+ogr2ogr -f FlatGeobuf hex-grid.fgb hex-grid.geojson -nlt PROMOTE_TO_MULTI
+ogr2ogr -f FlatGeobuf tpr.fgb      tpr.geojson      -nlt PROMOTE_TO_MULTI
+ogr2ogr -f FlatGeobuf tpp.fgb      tpp.geojson      -nlt PROMOTE_TO_MULTI
+
+<span class="cm"># Verify spatial index is present</span>
+ogrinfo hex-grid.fgb -al -so</code></pre>
+          <div class="alert alert-y">
+            <span>⚠️</span>
+            <span>FlatGeobuf's HTTP range request (viewport filtering) only works if the file has a <strong>spatial index</strong>. ogr2ogr writes it by default — confirm with ogrinfo that you see <code>Index</code> in output.</span>
+          </div>
+        </div>
+      </div>
+
+      <!-- Step 3 -->
+      <div class="step">
+        <div class="step-num sn-todo">3</div>
+        <div class="step-body">
+          <div class="step-title">Step 3 — Private S3 Bucket + Upload</div>
+          <div class="step-desc">Create fully private bucket, block all public access, upload the three .fgb files.</div>
+          <div class="checklist">
+            <div class="ci"><span class="dot dot-m"></span>Create S3 bucket in your region</div>
+            <div class="ci"><span class="dot dot-m"></span>Block all public access (4 flags)</div>
+            <div class="ci"><span class="dot dot-m"></span>Upload hex-grid.fgb, tpr.fgb, tpp.fgb to <code>s3://bucket/fgb/</code></div>
+          </div>
+          <pre><code>aws s3api create-bucket --bucket your-geo-bucket --region ap-south-1 \
+  --create-bucket-configuration LocationConstraint=ap-south-1
+
+aws s3api put-public-access-block --bucket your-geo-bucket \
+  --public-access-block-configuration \
+  <span class="str">"BlockPublicAcls=true,IgnorePublicAcls=true,BlockPublicPolicy=true,RestrictPublicBuckets=true"</span>
+
+aws s3 cp hex-grid.fgb s3://your-geo-bucket/fgb/
+aws s3 cp tpr.fgb      s3://your-geo-bucket/fgb/
+aws s3 cp tpp.fgb      s3://your-geo-bucket/fgb/</code></pre>
+        </div>
+      </div>
+
+      <!-- Step 4 -->
+      <div class="step">
+        <div class="step-num sn-todo">4</div>
+        <div class="step-body">
+          <div class="step-title">Step 4 — CloudFront Distribution + OAC + Restrict Viewer Access</div>
+          <div class="step-desc">Create a CloudFront distribution with OAC (so only CF can read S3) and set <strong>Restrict Viewer Access = Yes</strong> (so only browsers with valid signed cookies can request files).</div>
+          <div class="checklist">
+            <div class="ci"><span class="dot dot-m"></span>Create Origin Access Control (OAC) for S3</div>
+            <div class="ci"><span class="dot dot-m"></span>Create CloudFront distribution → S3 origin with OAC</div>
+            <div class="ci"><span class="dot dot-m"></span>Set <strong>Restrict Viewer Access = Yes</strong> on the behavior</div>
+            <div class="ci"><span class="dot dot-m"></span>Add <code>Range</code> header to cache policy cache key (critical for FGB range requests)</div>
+            <div class="ci"><span class="dot dot-m"></span>Update S3 bucket policy to allow CloudFront distribution ARN</div>
+          </div>
+          <pre><code><span class="cm"># S3 bucket policy — paste in AWS Console or via CLI</span>
+{
+  <span class="str">"Version"</span>: <span class="str">"2012-10-17"</span>,
+  <span class="str">"Statement"</span>: [{
+    <span class="str">"Effect"</span>: <span class="str">"Allow"</span>,
+    <span class="str">"Principal"</span>: { <span class="str">"Service"</span>: <span class="str">"cloudfront.amazonaws.com"</span> },
+    <span class="str">"Action"</span>: <span class="str">"s3:GetObject"</span>,
+    <span class="str">"Resource"</span>: <span class="str">"arn:aws:s3:::your-geo-bucket/*"</span>,
+    <span class="str">"Condition"</span>: {
+      <span class="str">"StringEquals"</span>: {
+        <span class="str">"AWS:SourceArn"</span>: <span class="str">"arn:aws:cloudfront::ACCOUNT_ID:distribution/DIST_ID"</span>
+      }
+    }
+  }]
+}</code></pre>
+          <div class="alert alert-y">
+            <span>⚠️</span>
+            <span><strong>Cache policy must include <code>Range</code> in the cache key.</strong> FlatGeobuf fetches different byte ranges of the same file for each viewport. Without this, CloudFront returns the wrong cached chunk.</span>
+          </div>
+        </div>
+      </div>
+
+      <!-- Step 5 -->
+      <div class="step">
+        <div class="step-num sn-todo">5</div>
+        <div class="step-body">
+          <div class="step-title">Step 5 — CloudFront Key Pair + SSM Parameter Store</div>
+          <div class="step-desc">Generate a CloudFront key pair for signing cookies. Store the private key in SSM so Lambda can access it securely.</div>
+          <div class="checklist">
+            <div class="ci"><span class="dot dot-m"></span>AWS Console → Account → Security Credentials → CloudFront key pairs → Create</div>
+            <div class="ci"><span class="dot dot-m"></span>Download private key (.pem file) — store it safely, you can't re-download</div>
+            <div class="ci"><span class="dot dot-m"></span>Note the Key Pair ID</div>
+            <div class="ci"><span class="dot dot-m"></span>Store private key in SSM as SecureString</div>
+            <div class="ci"><span class="dot dot-m"></span>Store Key Pair ID and CF domain in SSM</div>
+          </div>
+          <pre><code><span class="cm"># Store in SSM Parameter Store</span>
+aws ssm put-parameter \
+  --name <span class="str">"/geo/cf-private-key"</span> \
+  --type <span class="str">"SecureString"</span> \
+  --value <span class="str">"$(cat cloudfront-private-key.pem)"</span>
+
+aws ssm put-parameter \
+  --name <span class="str">"/geo/cf-key-pair-id"</span> \
+  --type <span class="str">"String"</span> \
+  --value <span class="str">"APKAXXXXXXXXXX"</span>
+
+aws ssm put-parameter \
+  --name <span class="str">"/geo/cf-domain"</span> \
+  --type <span class="str">"String"</span> \
+  --value <span class="str">"d1234abcd.cloudfront.net"</span></code></pre>
+        </div>
+      </div>
+
+      <!-- Step 6 -->
+      <div class="step">
+        <div class="step-num sn-todo">6</div>
+        <div class="step-body">
+          <div class="step-title">Step 6 — Serverless 4: Lambda Signed Cookie Endpoint</div>
+          <div class="step-desc">Deploy <code>GET /geo/auth</code> Lambda. React calls this once on mount; it sets 3 CloudFront cookies covering all <code>/fgb/*</code> paths for 8 hours.</div>
+          <div class="checklist">
+            <div class="ci"><span class="dot dot-m"></span>Scaffold with <code>sls create</code></div>
+            <div class="ci"><span class="dot dot-m"></span>Write auth handler (issues signed cookies)</div>
+            <div class="ci"><span class="dot dot-m"></span>Configure CORS with <code>credentials: true</code></div>
+            <div class="ci"><span class="dot dot-m"></span><code>sls deploy</code> and test endpoint</div>
+          </div>
+          <pre><code><span class="cm"># serverless.yml</span>
+<span class="kw">service</span>: geo-auth
+<span class="kw">provider</span>:
+  <span class="kw">name</span>: aws
+  <span class="kw">runtime</span>: nodejs20.x
+  <span class="kw">environment</span>:
+    CF_KEY_PAIR_ID: <span class="str">${ssm:/geo/cf-key-pair-id}</span>
+    CF_PRIVATE_KEY: <span class="str">${ssm:/geo/cf-private-key}</span>
+    CF_DOMAIN:      <span class="str">${ssm:/geo/cf-domain}</span>
+    ALLOWED_ORIGIN: <span class="str">https://your-app.com</span>
+
+<span class="kw">functions</span>:
+  geoAuth:
+    <span class="kw">handler</span>: src/auth.handler
+    <span class="kw">events</span>:
+      - httpApi:
+          <span class="kw">path</span>: /geo/auth
+          <span class="kw">method</span>: GET</code></pre>
+          <pre><code><span class="cm">// src/auth.ts</span>
+<span class="kw">import</span> { getSignedCookies } from <span class="str">'@aws-sdk/cloudfront-signer'</span>
+
+<span class="kw">export const</span> handler = <span class="kw">async</span> () => {
+  <span class="kw">const</span> expiry = Math.<span class="fn">floor</span>(Date.now() / <span class="num">1000</span>) + <span class="num">60 * 60 * 8</span> <span class="cm">// 8 hrs</span>
+
+  <span class="kw">const</span> cookies = <span class="fn">getSignedCookies</span>({
+    keyPairId:  process.env.CF_KEY_PAIR_ID!,
+    privateKey: process.env.CF_PRIVATE_KEY!,
+    policy: JSON.<span class="fn">stringify</span>({
+      Statement: [{
+        Resource: <span class="str">`https://${process.env.CF_DOMAIN}/fgb/*`</span>,
+        Condition: { DateLessThan: { <span class="str">'AWS:EpochTime'</span>: expiry } }
+      }]
+    })
+  })
+
+  <span class="kw">return</span> {
+    statusCode: <span class="num">200</span>,
+    multiValueHeaders: {
+      <span class="str">'Set-Cookie'</span>: [
+        <span class="str">`CloudFront-Policy=${cookies[<span class="str">'CloudFront-Policy'</span>]}; Path=/; Secure; SameSite=None`</span>,
+        <span class="str">`CloudFront-Signature=${cookies[<span class="str">'CloudFront-Signature'</span>]}; Path=/; Secure; SameSite=None`</span>,
+        <span class="str">`CloudFront-Key-Pair-Id=${cookies[<span class="str">'CloudFront-Key-Pair-Id'</span>]}; Path=/; Secure; SameSite=None`</span>,
+      ],
+      <span class="str">'Access-Control-Allow-Origin'</span>:      [process.env.ALLOWED_ORIGIN!],
+      <span class="str">'Access-Control-Allow-Credentials'</span>: [<span class="str">'true'</span>],
+    },
+    body: JSON.<span class="fn">stringify</span>({ ok: <span class="kw">true</span> })
+  }
+}</code></pre>
+        </div>
+      </div>
+
+      <!-- Step 7 -->
+      <div class="step">
+        <div class="step-num sn-todo">7</div>
+        <div class="step-body">
+          <div class="step-title">Step 7 — React + flatgeobuf + MapLibre</div>
+          <div class="step-desc">Fetch signed cookies on mount, then stream .fgb features from CloudFront on every map move. Update a GeoJSON source to re-render.</div>
+          <div class="checklist">
+            <div class="ci"><span class="dot dot-m"></span>Install <code>flatgeobuf</code> and <code>maplibre-gl</code></div>
+            <div class="ci"><span class="dot dot-m"></span>Auth fetch on app mount (credentials: include)</div>
+            <div class="ci"><span class="dot dot-m"></span>Add empty GeoJSON sources for each layer</div>
+            <div class="ci"><span class="dot dot-m"></span>On <code>moveend</code>: stream .fgb with current bbox, update source</div>
+            <div class="ci"><span class="dot dot-m"></span>Add layers with minzoom/maxzoom to control visibility</div>
+          </div>
+          <pre><code>npm install flatgeobuf maplibre-gl</code></pre>
+          <pre><code><span class="cm">// src/hooks/useFlatGeobuf.ts</span>
+<span class="kw">import</span> * as flatgeobuf from <span class="str">'flatgeobuf/lib/mjs/geojson'</span>
+
+<span class="kw">const</span> CDN = <span class="str">'https://d1234abcd.cloudfront.net'</span>
+
+<span class="kw">export async function</span> <span class="fn">fetchLayer</span>(file: string, bbox: [number,number,number,number]) {
+  <span class="kw">const</span> [minX, minY, maxX, maxY] = bbox
+  <span class="kw">const</span> rect = { minX, minY, maxX, maxY }
+
+  <span class="kw">const</span> features: any[] = []
+  <span class="kw">const</span> iter = flatgeobuf.<span class="fn">deserialize</span>(
+    <span class="str">`${CDN}/fgb/${file}`</span>,
+    rect,
+    undefined,
+    { credentials: <span class="str">'include'</span> }  <span class="cm">// sends signed cookies</span>
+  )
+  <span class="kw">for await</span> (<span class="kw">const</span> f <span class="kw">of</span> iter) features.<span class="fn">push</span>(f)
+  <span class="kw">return</span> { type: <span class="str">'FeatureCollection'</span>, features }
+}
+
+<span class="cm">// In map component — re-fetch on every move</span>
+map.<span class="fn">on</span>(<span class="str">'moveend'</span>, <span class="kw">async</span> () => {
+  <span class="kw">const</span> b = map.<span class="fn">getBounds</span>()
+  <span class="kw">const</span> bbox = [b.<span class="fn">getWest</span>(), b.<span class="fn">getSouth</span>(), b.<span class="fn">getEast</span>(), b.<span class="fn">getNorth</span>()] <span class="kw">as</span> [number,number,number,number]
+  <span class="kw">const</span> zoom = map.<span class="fn">getZoom</span>()
+
+  <span class="cm">// zoom-gated fetches</span>
+  <span class="kw">if</span> (zoom >= <span class="num">3</span>) (map.<span class="fn">getSource</span>(<span class="str">'hex'</span>) <span class="kw">as any</span>).<span class="fn">setData</span>(<span class="kw">await</span> <span class="fn">fetchLayer</span>(<span class="str">'hex-grid.fgb'</span>, bbox))
+  <span class="kw">if</span> (zoom >= <span class="num">5</span>) (map.<span class="fn">getSource</span>(<span class="str">'tpr'</span>) <span class="kw">as any</span>).<span class="fn">setData</span>(<span class="kw">await</span> <span class="fn">fetchLayer</span>(<span class="str">'tpr.fgb'</span>, bbox))
+                (map.<span class="fn">getSource</span>(<span class="str">'tpp'</span>) <span class="kw">as any</span>).<span class="fn">setData</span>(<span class="kw">await</span> <span class="fn">fetchLayer</span>(<span class="str">'tpp.fgb'</span>, bbox))
+})</code></pre>
+          <div class="alert alert-b">
+            <span>💡</span>
+            <span>Debounce the <code>moveend</code> handler by ~150ms to avoid firing too many range requests while the user is still dragging/zooming.</span>
+          </div>
+        </div>
+      </div>
+
+      <!-- Step 8 -->
+      <div class="step">
+        <div class="step-num sn-todo">8</div>
+        <div class="step-body">
+          <div class="step-title">Step 8 — Test &amp; Verify</div>
+          <div class="step-desc">Confirm private access, range requests, zoom-gated layers, and cookie expiry/refresh all work correctly.</div>
+          <div class="checklist">
+            <div class="ci"><span class="dot dot-m"></span>DevTools → Network: tile requests show <code>Range: bytes=...</code> header</div>
+            <div class="ci"><span class="dot dot-m"></span>Confirm <code>403</code> returned if cookies absent (private access working)</div>
+            <div class="ci"><span class="dot dot-m"></span>Pan map and verify only viewport features are in the GeoJSON source</div>
+            <div class="ci"><span class="dot dot-m"></span>Zoom in/out and verify each layer appears at correct zoom</div>
+            <div class="ci"><span class="dot dot-m"></span>Wait 8 hrs (or set short expiry to test) → confirm cookie re-fetch works</div>
+          </div>
+        </div>
+      </div>
+
+    </div>
+  </section>
+
+  <!-- Progress -->
+  <section>
+    <h2>Progress</h2>
+    <div class="progress-wrap">
+      <div class="progress-stats">
+        <div>
+          <div class="stat-num" style="color:var(--accent2)">1</div>
+          <div class="stat-lbl">Done</div>
+        </div>
+        <div>
+          <div class="stat-num" style="color:var(--yellow)">1</div>
+          <div class="stat-lbl">In Progress</div>
+        </div>
+        <div>
+          <div class="stat-num" style="color:var(--muted)">6</div>
+          <div class="stat-lbl">Remaining</div>
+        </div>
+      </div>
+      <div class="progress-bar-bg">
+        <div class="progress-bar-fill"></div>
+      </div>
+      <div class="progress-note">Step 1 of 8 complete &nbsp;·&nbsp; Currently: Step 2 — ogr2ogr GeoJSON → .fgb conversion</div>
+    </div>
+  </section>
+
+  <footer>
+    Generated June 16, 2026 &nbsp;·&nbsp; v2 — Revised to FlatGeobuf (.fgb) &nbsp;·&nbsp; geo/vite-project/docs/tiles-setup-fgb.html
+  </footer>
+
+</div>
+</body>
+</html>

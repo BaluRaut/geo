@@ -1,17 +1,8 @@
-import { useState } from 'react'
 import './App.css'
-import GeoMap from './GeoMap'
-import PMTilesMap from './PMTilesMap'
+import MapboxMap from './MapboxMap'
 
 function App() {
-  const [count, setCount] = useState(0)
-
-  return (
-    <>
-    <GeoMap/>
-  <PMTilesMap/>
-    </>
-  )
+  return <MapboxMap />
 }
 
 export default App

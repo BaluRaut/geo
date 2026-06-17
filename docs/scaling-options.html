@@ -1,0 +1,519 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Scaling to 20 Countries — Honest Options</title>
+  <style>
+    :root {
+      --bg:      #0d1117;
+      --surface: #161b22;
+      --s2:      #1c2128;
+      --border:  #30363d;
+      --blue:    #58a6ff;
+      --green:   #3fb950;
+      --yellow:  #d29922;
+      --red:     #f85149;
+      --purple:  #bc8cff;
+      --orange:  #ffa657;
+      --text:    #c9d1d9;
+      --muted:   #8b949e;
+    }
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    body {
+      font-family: -apple-system,'Segoe UI',system-ui,sans-serif;
+      background: var(--bg); color: var(--text);
+      line-height: 1.7; padding: 2rem 1rem;
+    }
+    .wrap { max-width: 1040px; margin: 0 auto; }
+
+    header { border-bottom: 1px solid var(--border); padding-bottom: 1.5rem; margin-bottom: 2.5rem; }
+    header h1 { font-size: 1.75rem; color: #f0f6fc; letter-spacing: -.02em; }
+    header p  { color: var(--muted); font-size: .88rem; margin-top: .4rem; }
+
+    h2 {
+      font-size: .9rem; color: var(--muted); text-transform: uppercase;
+      letter-spacing: .1em; margin-bottom: 1.2rem;
+      display: flex; align-items: center; gap: .7rem;
+    }
+    h2::after { content: ''; flex: 1; height: 1px; background: var(--border); }
+    section { margin-bottom: 3rem; }
+
+    /* ── Scale table ── */
+    .scale-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr 1fr 1fr;
+      gap: 1px;
+      background: var(--border);
+      border: 1px solid var(--border);
+      border-radius: 10px;
+      overflow: hidden;
+      font-size: .83rem;
+    }
+    .sg-head {
+      background: var(--s2); padding: .65rem 1rem;
+      color: var(--muted); font-weight: 600; font-size: .75rem;
+      text-transform: uppercase; letter-spacing: .06em;
+    }
+    .sg-cell {
+      background: var(--surface); padding: .65rem 1rem;
+    }
+    .sg-cell.warn  { background: #d2992208; }
+    .sg-cell.bad   { background: #f8514908; }
+    .sg-cell.good  { background: #3fb95008; }
+    .num-good  { color: var(--green);  font-weight: 700; }
+    .num-warn  { color: var(--yellow); font-weight: 700; }
+    .num-bad   { color: var(--red);    font-weight: 700; }
+    .sub       { font-size: .75rem; color: var(--muted); }
+
+    /* ── Options ── */
+    .options { display: flex; flex-direction: column; gap: 1.2rem; }
+    .opt {
+      background: var(--surface); border: 1px solid var(--border);
+      border-radius: 10px; overflow: hidden;
+    }
+    .opt-head {
+      padding: 1rem 1.3rem;
+      display: flex; align-items: flex-start; gap: 1rem;
+      border-bottom: 1px solid var(--border);
+    }
+    .opt-rank {
+      width: 2.2rem; height: 2.2rem; border-radius: 50%;
+      display: flex; align-items: center; justify-content: center;
+      font-weight: 800; font-size: .9rem; flex-shrink: 0;
+    }
+    .rank-1 { background: #22c55e22; color: #22c55e; border: 1.5px solid #22c55e55; }
+    .rank-2 { background: #58a6ff22; color: #79c0ff; border: 1.5px solid #58a6ff55; }
+    .rank-3 { background: #ffa65722; color: #ffa657; border: 1.5px solid #ffa65755; }
+    .rank-4 { background: #bc8cff22; color: #d2a8ff; border: 1.5px solid #bc8cff55; }
+    .rank-x { background: #f8514922; color: #ff7b72; border: 1.5px solid #f8514955; }
+    .opt-title { font-weight: 700; font-size: 1rem; color: #f0f6fc; }
+    .opt-sub   { font-size: .82rem; color: var(--muted); margin-top: .2rem; }
+    .opt-body  { display: grid; grid-template-columns: 1fr 1fr; gap: 0; }
+    .pros, .cons {
+      padding: 1rem 1.3rem;
+    }
+    .pros { border-right: 1px solid var(--border); }
+    .phead { font-size: .75rem; font-weight: 700; text-transform: uppercase; letter-spacing: .06em; margin-bottom: .6rem; }
+    .pros .phead { color: var(--green); }
+    .cons .phead { color: var(--red); }
+    .li { display: flex; align-items: flex-start; gap: .6rem; font-size: .83rem; margin-bottom: .4rem; }
+    .li:last-child { margin-bottom: 0; }
+    .li-dot { flex-shrink: 0; margin-top: .45rem; width: 6px; height: 6px; border-radius: 50%; }
+    .li-dot-g { background: var(--green); }
+    .li-dot-r { background: var(--red); }
+    .opt-meta {
+      border-top: 1px solid var(--border);
+      display: grid;
+      grid-template-columns: repeat(4, 1fr);
+      gap: 0;
+    }
+    .meta-cell {
+      padding: .7rem 1rem;
+      border-right: 1px solid var(--border);
+      font-size: .78rem;
+    }
+    .meta-cell:last-child { border-right: none; }
+    .meta-label { color: var(--muted); font-size: .7rem; text-transform: uppercase; letter-spacing: .05em; margin-bottom: .2rem; }
+    .meta-val   { font-weight: 600; color: #f0f6fc; }
+    .meta-val.g { color: var(--green); }
+    .meta-val.y { color: var(--yellow); }
+    .meta-val.r { color: var(--red); }
+
+    /* ── Verdict ── */
+    .verdict {
+      background: #22c55e0d;
+      border: 1px solid #22c55e33;
+      border-radius: 10px;
+      padding: 1.3rem 1.5rem;
+    }
+    .verdict h3 { color: #56d364; font-size: 1rem; margin-bottom: .8rem; }
+    .verdict p  { font-size: .87rem; color: var(--text); line-height: 1.75; }
+    .verdict strong { color: #f0f6fc; }
+
+    .warn-box {
+      background: #d2992208;
+      border: 1px solid #d2992233;
+      border-radius: 8px;
+      padding: .9rem 1.1rem;
+      font-size: .84rem; color: #e3b341;
+      margin-top: .8rem;
+      display: flex; gap: .75rem; align-items: flex-start;
+    }
+
+    .render-box {
+      background: #f8514908;
+      border: 1px solid #f8514933;
+      border-radius: 8px;
+      padding: .9rem 1.1rem;
+      font-size: .84rem; color: #ff7b72;
+      margin-top: .8rem;
+      display: flex; gap: .75rem; align-items: flex-start;
+    }
+
+    code { font-family: 'JetBrains Mono',ui-monospace,monospace; font-size: .85em; }
+
+    .tag {
+      display: inline-block; padding: .12rem .5rem;
+      border-radius: 4px; font-size: .7rem; font-weight: 600;
+    }
+    .tag-now    { background: #58a6ff22; color: #79c0ff; }
+    .tag-rec    { background: #22c55e22; color: #56d364; }
+    .tag-skip   { background: #f8514922; color: #ff7b72; }
+
+    footer {
+      border-top: 1px solid var(--border);
+      padding-top: 1.4rem; color: var(--muted);
+      font-size: .78rem; text-align: center; margin-top: 3rem;
+    }
+  </style>
+</head>
+<body>
+<div class="wrap">
+
+  <header>
+    <h1>Scaling to 20 Countries — Honest Options</h1>
+    <p>Real numbers from current data · Hex grid · TPP · TPR · CDN vs Database trade-offs</p>
+    <p style="margin-top:.3rem;font-size:.78rem;color:#475569">Last updated: June 16, 2026</p>
+  </header>
+
+  <!-- ── Data size reality ── -->
+  <section>
+    <h2>What 20 Countries Actually Means</h2>
+    <div class="scale-grid">
+      <div class="sg-head">Layer</div>
+      <div class="sg-head">Per country (avg)</div>
+      <div class="sg-head">20 countries — wire (gz)</div>
+      <div class="sg-head">20 countries — in browser</div>
+
+      <!-- hex -->
+      <div class="sg-cell"><strong>Hex Grid</strong><br><span class="sub">~1,400 polygons/country</span></div>
+      <div class="sg-cell good"><span class="num-good">~58 KB gz</span><br><span class="sub">measured: UA 79 KB, HU 33 KB, RO 63 KB</span></div>
+      <div class="sg-cell good"><span class="num-good">~1.2 MB</span><br><span class="sub">fine — loads in &lt;1s on 4G</span></div>
+      <div class="sg-cell good"><span class="num-good">~28 K features</span><br><span class="sub">SVG will slow at full zoom</span></div>
+
+      <!-- TPP -->
+      <div class="sg-cell"><strong>TPP</strong><br><span class="sub">2–5 polygons/country</span></div>
+      <div class="sg-cell good"><span class="num-good">~100 KB gz</span><br><span class="sub">varies with boundary complexity</span></div>
+      <div class="sg-cell good"><span class="num-good">~2 MB</span><br><span class="sub">fine</span></div>
+      <div class="sg-cell good"><span class="num-good">~80 features</span><br><span class="sub">no issue at all</span></div>
+
+      <!-- TPR -->
+      <div class="sg-cell"><strong>TPR</strong><br><span class="sub">100×100 = 10K cells/country</span></div>
+      <div class="sg-cell warn"><span class="num-warn">~400 KB gz</span><br><span class="sub">estimate — no real data yet</span></div>
+      <div class="sg-cell warn"><span class="num-warn">~8 MB</span><br><span class="sub">borderline for initial load</span></div>
+      <div class="sg-cell bad"><span class="num-bad">200 K features</span><br><span class="sub">⚠️ SVG/canvas will choke</span></div>
+
+      <!-- total -->
+      <div class="sg-cell" style="background:var(--s2);font-weight:700">Total (all 3 layers)</div>
+      <div class="sg-cell" style="background:var(--s2)">—</div>
+      <div class="sg-cell warn" style="background:var(--s2)"><span class="num-warn">~11 MB wire</span></div>
+      <div class="sg-cell bad"  style="background:var(--s2)"><span class="num-bad">~228 K features</span><br><span class="sub">browser memory ~400 MB</span></div>
+    </div>
+
+    <div class="render-box">
+      <span>🚨</span>
+      <span><strong>The real bottleneck is not storage or transfer — it's browser rendering.</strong>
+      228K SVG features will freeze Leaflet. Even with canvas renderer it will lag.
+      Any option you pick must also address rendering strategy (tile-based zoom, WebGL, or viewport culling).</span>
+    </div>
+  </section>
+
+  <!-- ── Options ── -->
+  <section>
+    <h2>Options</h2>
+    <div class="options">
+
+      <!-- Option 1 -->
+      <div class="opt">
+        <div class="opt-head">
+          <div class="opt-rank rank-1">1</div>
+          <div>
+            <div class="opt-title">Hybrid CDN — FGB for TPP, PMTiles for Hex + TPR &nbsp;<span class="tag tag-rec">Recommended</span></div>
+            <div class="opt-sub">Keep TPP as FlatGeobuf. Convert Hex grid and TPR to PMTiles (tippecanoe). All served from S3 + CloudFront. Switch renderer to MapLibre GL.</div>
+          </div>
+        </div>
+        <div class="opt-body">
+          <div class="pros">
+            <div class="phead">✓ Pros</div>
+            <div class="li"><span class="li-dot li-dot-g"></span>PMTiles only fetches tiles for current viewport + zoom — 200K TPR features become a non-issue</div>
+            <div class="li"><span class="li-dot li-dot-g"></span>Zero server costs — S3 + CloudFront only (~$5–20/month)</div>
+            <div class="li"><span class="li-dot li-dot-g"></span>MapLibre renders tiles with WebGL — handles 200K+ features smoothly</div>
+            <div class="li"><span class="li-dot li-dot-g"></span>TPP stays as FGB (tiny, loads instantly, full feature data in popups)</div>
+            <div class="li"><span class="li-dot li-dot-g"></span>Scales to 50+ countries with same architecture</div>
+            <div class="li"><span class="li-dot li-dot-g"></span>Auth stays the same (CloudFront signed cookies)</div>
+          </div>
+          <div class="cons">
+            <div class="phead">✗ Cons</div>
+            <div class="li"><span class="li-dot li-dot-r"></span>Need to switch Leaflet → MapLibre (1–2 days work)</div>
+            <div class="li"><span class="li-dot li-dot-r"></span>tippecanoe needed for conversion pipeline</div>
+            <div class="li"><span class="li-dot li-dot-r"></span>PMTiles popup on click is harder than FGB (need to decode tile on click)</div>
+            <div class="li"><span class="li-dot li-dot-r"></span>Data updates require full re-tile (not real-time)</div>
+          </div>
+        </div>
+        <div class="opt-meta">
+          <div class="meta-cell"><div class="meta-label">Monthly cost</div><div class="meta-val g">$5–20</div></div>
+          <div class="meta-cell"><div class="meta-label">Render 200K TPR</div><div class="meta-val g">✓ Fast (WebGL)</div></div>
+          <div class="meta-cell"><div class="meta-label">Setup effort</div><div class="meta-val y">3–5 days</div></div>
+          <div class="meta-cell"><div class="meta-label">Real-time data</div><div class="meta-val r">No</div></div>
+        </div>
+      </div>
+
+      <!-- Option 2 -->
+      <div class="opt">
+        <div class="opt-head">
+          <div class="opt-rank rank-2">2</div>
+          <div>
+            <div class="opt-title">PostGIS + Martin tile server (EC2) &nbsp;<span class="tag tag-rec">Best if data changes often</span></div>
+            <div class="opt-sub">Load all layers into PostGIS. Run Martin (Rust tile server) on a small EC2 instance. Serves MVT tiles dynamically from spatial queries.</div>
+          </div>
+        </div>
+        <div class="opt-body">
+          <div class="pros">
+            <div class="phead">✓ Pros</div>
+            <div class="li"><span class="li-dot li-dot-g"></span>True on-demand — only data in the viewport is queried and served</div>
+            <div class="li"><span class="li-dot li-dot-g"></span>PostGIS spatial queries: filter by bbox, attribute, country at server side</div>
+            <div class="li"><span class="li-dot li-dot-g"></span>Data updates instantly — just UPDATE the database row</div>
+            <div class="li"><span class="li-dot li-dot-g"></span>Martin is extremely fast (Rust, async) — &lt;10ms tile response</div>
+            <div class="li"><span class="li-dot li-dot-g"></span>Handles 200K TPR features natively via ST_AsMVT</div>
+            <div class="li"><span class="li-dot li-dot-g"></span>Works with MapLibre directly as a vector tile source</div>
+          </div>
+          <div class="cons">
+            <div class="phead">✗ Cons</div>
+            <div class="li"><span class="li-dot li-dot-r"></span>Always-on EC2 + RDS = $50–120/month minimum even with zero traffic</div>
+            <div class="li"><span class="li-dot li-dot-r"></span>You own the server — patching, restarts, monitoring</div>
+            <div class="li"><span class="li-dot li-dot-r"></span>Need to load all 20-country data into PostGIS (migration step)</div>
+            <div class="li"><span class="li-dot li-dot-r"></span>Martin config + IAM + security groups to set up</div>
+            <div class="li"><span class="li-dot li-dot-r"></span>CloudFront caching of dynamic tiles is complex to configure correctly</div>
+          </div>
+        </div>
+        <div class="opt-meta">
+          <div class="meta-cell"><div class="meta-label">Monthly cost</div><div class="meta-val y">$50–120</div></div>
+          <div class="meta-cell"><div class="meta-label">Render 200K TPR</div><div class="meta-val g">✓ Fast (MVT)</div></div>
+          <div class="meta-cell"><div class="meta-label">Setup effort</div><div class="meta-val y">5–7 days</div></div>
+          <div class="meta-cell"><div class="meta-label">Real-time data</div><div class="meta-val g">Yes</div></div>
+        </div>
+      </div>
+
+      <!-- Option 3 -->
+      <div class="opt">
+        <div class="opt-head">
+          <div class="opt-rank rank-3">3</div>
+          <div>
+            <div class="opt-title">FlatGeobuf Only on CDN (current approach, scaled) &nbsp;<span class="tag tag-now">Current</span></div>
+            <div class="opt-sub">Keep everything as FGB. One file per layer per country. Viewport filtering via HTTP range requests. Works today for 3 countries.</div>
+          </div>
+        </div>
+        <div class="opt-body">
+          <div class="pros">
+            <div class="phead">✓ Pros</div>
+            <div class="li"><span class="li-dot li-dot-g"></span>Already working — zero migration cost</div>
+            <div class="li"><span class="li-dot li-dot-g"></span>Cheap: S3 + CloudFront only</div>
+            <div class="li"><span class="li-dot li-dot-g"></span>Full feature properties on click (popups work perfectly)</div>
+            <div class="li"><span class="li-dot li-dot-g"></span>Range requests = viewport-only fetch for hex and TPP</div>
+            <div class="li"><span class="li-dot li-dot-g"></span>Simple pipeline: ogr2ogr / node script → upload</div>
+          </div>
+          <div class="cons">
+            <div class="phead">✗ Cons</div>
+            <div class="li"><span class="li-dot li-dot-r"></span><strong>TPR at 200K features will crash the browser tab</strong> — all features load into memory at once</div>
+            <div class="li"><span class="li-dot li-dot-r"></span>No zoom-level awareness — same file whether zoomed to world or street</div>
+            <div class="li"><span class="li-dot li-dot-r"></span>Leaflet SVG with 28K hex features will lag noticeably</div>
+            <div class="li"><span class="li-dot li-dot-r"></span>Adding countries = adding more files, managing more cache invalidations</div>
+          </div>
+        </div>
+        <div class="opt-meta">
+          <div class="meta-cell"><div class="meta-label">Monthly cost</div><div class="meta-val g">$5–20</div></div>
+          <div class="meta-cell"><div class="meta-label">Render 200K TPR</div><div class="meta-val r">✗ Will crash</div></div>
+          <div class="meta-cell"><div class="meta-label">Setup effort</div><div class="meta-val g">0 days</div></div>
+          <div class="meta-cell"><div class="meta-label">Real-time data</div><div class="meta-val r">No</div></div>
+        </div>
+      </div>
+
+      <!-- Option 4 -->
+      <div class="opt">
+        <div class="opt-head">
+          <div class="opt-rank rank-4">4</div>
+          <div>
+            <div class="opt-title">Lambda + DynamoDB / Aurora Serverless</div>
+            <div class="opt-sub">Lambda serves features from DynamoDB (NoSQL) or Aurora Serverless v2 (PostGIS). Fully serverless, no always-on instances.</div>
+          </div>
+        </div>
+        <div class="opt-body">
+          <div class="pros">
+            <div class="phead">✓ Pros</div>
+            <div class="li"><span class="li-dot li-dot-g"></span>No always-on servers</div>
+            <div class="li"><span class="li-dot li-dot-g"></span>Aurora Serverless scales to zero when idle</div>
+            <div class="li"><span class="li-dot li-dot-g"></span>DynamoDB: very cheap at low request volumes</div>
+          </div>
+          <div class="cons">
+            <div class="phead">✗ Cons</div>
+            <div class="li"><span class="li-dot li-dot-r"></span><strong>Cold starts kill map UX</strong> — first pan after idle = 3–8s tile delay</div>
+            <div class="li"><span class="li-dot li-dot-r"></span>Maps generate 20–50 tile requests per pan — Lambda cost adds up fast</div>
+            <div class="li"><span class="li-dot li-dot-r"></span>DynamoDB has no spatial index — bounding box queries are full scans</div>
+            <div class="li"><span class="li-dot li-dot-r"></span>Aurora Serverless ACU minimum = ~$40/month even when "off"</div>
+            <div class="li"><span class="li-dot li-dot-r"></span>Building a tile server in Lambda is complex; Martin on EC2 is simpler</div>
+          </div>
+        </div>
+        <div class="opt-meta">
+          <div class="meta-cell"><div class="meta-label">Monthly cost</div><div class="meta-val y">$40–100</div></div>
+          <div class="meta-cell"><div class="meta-label">Render 200K TPR</div><div class="meta-val y">Possible</div></div>
+          <div class="meta-cell"><div class="meta-label">Setup effort</div><div class="meta-val r">7–10 days</div></div>
+          <div class="meta-cell"><div class="meta-label">Real-time data</div><div class="meta-val y">Partial</div></div>
+        </div>
+      </div>
+
+      <!-- Option X -->
+      <div class="opt">
+        <div class="opt-head">
+          <div class="opt-rank rank-x">✗</div>
+          <div>
+            <div class="opt-title">All PMTiles on CDN (no FGB at all) &nbsp;<span class="tag tag-skip">Skip this</span></div>
+            <div class="opt-sub">Convert everything — hex, TPP, TPR — to PMTiles. No FGB at all.</div>
+          </div>
+        </div>
+        <div class="opt-body">
+          <div class="pros">
+            <div class="phead">✓ Pros</div>
+            <div class="li"><span class="li-dot li-dot-g"></span>Uniform pipeline — one format for everything</div>
+            <div class="li"><span class="li-dot li-dot-g"></span>Excellent for TPR and hex (tile-based zoom)</div>
+          </div>
+          <div class="cons">
+            <div class="phead">✗ Cons</div>
+            <div class="li"><span class="li-dot li-dot-r"></span>PMTiles strips properties aggressively at low zoom — popup data is lost</div>
+            <div class="li"><span class="li-dot li-dot-r"></span>TPP has only 2–5 features per country — PMTiles overhead is waste</div>
+            <div class="li"><span class="li-dot li-dot-r"></span>Clicking a feature returns the tile geometry, not the full row — need a separate data lookup to show popup details</div>
+            <div class="li"><span class="li-dot li-dot-r"></span>tippecanoe decisions (simplification, minzoom) must be tuned per layer type</div>
+          </div>
+        </div>
+        <div class="opt-meta">
+          <div class="meta-cell"><div class="meta-label">Monthly cost</div><div class="meta-val g">$5–15</div></div>
+          <div class="meta-cell"><div class="meta-label">Render 200K TPR</div><div class="meta-val g">✓ Fine</div></div>
+          <div class="meta-cell"><div class="meta-label">Setup effort</div><div class="meta-val y">3–4 days</div></div>
+          <div class="meta-cell"><div class="meta-label">Popups (full data)</div><div class="meta-val r">✗ Broken</div></div>
+        </div>
+      </div>
+
+    </div>
+  </section>
+
+  <!-- ── Decision matrix ── -->
+  <section>
+    <h2>Decision Matrix</h2>
+    <div style="overflow-x:auto">
+      <table style="width:100%;border-collapse:collapse;font-size:.83rem;min-width:700px">
+        <thead>
+          <tr>
+            <th style="text-align:left;padding:.6rem 1rem;background:var(--s2);color:var(--muted);font-size:.72rem;text-transform:uppercase;letter-spacing:.06em">Criterion</th>
+            <th style="padding:.6rem 1rem;background:var(--s2);color:var(--muted);font-size:.72rem;text-transform:uppercase;letter-spacing:.06em">Hybrid CDN</th>
+            <th style="padding:.6rem 1rem;background:var(--s2);color:var(--muted);font-size:.72rem;text-transform:uppercase;letter-spacing:.06em">PostGIS+Martin</th>
+            <th style="padding:.6rem 1rem;background:var(--s2);color:var(--muted);font-size:.72rem;text-transform:uppercase;letter-spacing:.06em">FGB only</th>
+            <th style="padding:.6rem 1rem;background:var(--s2);color:var(--muted);font-size:.72rem;text-transform:uppercase;letter-spacing:.06em">Lambda+DB</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td style="padding:.6rem 1rem;border-top:1px solid var(--border)">TPR 200K render</td>
+            <td style="padding:.6rem 1rem;border-top:1px solid var(--border);text-align:center;color:var(--green)">✓ WebGL</td>
+            <td style="padding:.6rem 1rem;border-top:1px solid var(--border);text-align:center;color:var(--green)">✓ MVT</td>
+            <td style="padding:.6rem 1rem;border-top:1px solid var(--border);text-align:center;color:var(--red)">✗ Crash</td>
+            <td style="padding:.6rem 1rem;border-top:1px solid var(--border);text-align:center;color:var(--yellow)">~ Possible</td>
+          </tr>
+          <tr style="background:var(--surface)">
+            <td style="padding:.6rem 1rem;border-top:1px solid var(--border)">Full popup properties</td>
+            <td style="padding:.6rem 1rem;border-top:1px solid var(--border);text-align:center;color:var(--green)">✓ FGB</td>
+            <td style="padding:.6rem 1rem;border-top:1px solid var(--border);text-align:center;color:var(--green)">✓ DB query</td>
+            <td style="padding:.6rem 1rem;border-top:1px solid var(--border);text-align:center;color:var(--green)">✓ FGB</td>
+            <td style="padding:.6rem 1rem;border-top:1px solid var(--border);text-align:center;color:var(--yellow)">~ Complex</td>
+          </tr>
+          <tr>
+            <td style="padding:.6rem 1rem;border-top:1px solid var(--border)">Monthly cost</td>
+            <td style="padding:.6rem 1rem;border-top:1px solid var(--border);text-align:center;color:var(--green)">$5–20</td>
+            <td style="padding:.6rem 1rem;border-top:1px solid var(--border);text-align:center;color:var(--yellow)">$50–120</td>
+            <td style="padding:.6rem 1rem;border-top:1px solid var(--border);text-align:center;color:var(--green)">$5–20</td>
+            <td style="padding:.6rem 1rem;border-top:1px solid var(--border);text-align:center;color:var(--yellow)">$40–100</td>
+          </tr>
+          <tr style="background:var(--surface)">
+            <td style="padding:.6rem 1rem;border-top:1px solid var(--border)">Real-time updates</td>
+            <td style="padding:.6rem 1rem;border-top:1px solid var(--border);text-align:center;color:var(--red)">No</td>
+            <td style="padding:.6rem 1rem;border-top:1px solid var(--border);text-align:center;color:var(--green)">Yes</td>
+            <td style="padding:.6rem 1rem;border-top:1px solid var(--border);text-align:center;color:var(--red)">No</td>
+            <td style="padding:.6rem 1rem;border-top:1px solid var(--border);text-align:center;color:var(--yellow)">Partial</td>
+          </tr>
+          <tr>
+            <td style="padding:.6rem 1rem;border-top:1px solid var(--border)">Setup effort</td>
+            <td style="padding:.6rem 1rem;border-top:1px solid var(--border);text-align:center;color:var(--yellow)">3–5 days</td>
+            <td style="padding:.6rem 1rem;border-top:1px solid var(--border);text-align:center;color:var(--yellow)">5–7 days</td>
+            <td style="padding:.6rem 1rem;border-top:1px solid var(--border);text-align:center;color:var(--green)">0 days</td>
+            <td style="padding:.6rem 1rem;border-top:1px solid var(--border);text-align:center;color:var(--red)">7–10 days</td>
+          </tr>
+          <tr style="background:var(--surface)">
+            <td style="padding:.6rem 1rem;border-top:1px solid var(--border)">Scales to 50+ countries</td>
+            <td style="padding:.6rem 1rem;border-top:1px solid var(--border);text-align:center;color:var(--green)">✓</td>
+            <td style="padding:.6rem 1rem;border-top:1px solid var(--border);text-align:center;color:var(--green)">✓</td>
+            <td style="padding:.6rem 1rem;border-top:1px solid var(--border);text-align:center;color:var(--red)">✗</td>
+            <td style="padding:.6rem 1rem;border-top:1px solid var(--border);text-align:center;color:var(--yellow)">~</td>
+          </tr>
+          <tr>
+            <td style="padding:.6rem 1rem;border-top:1px solid var(--border)">No always-on server</td>
+            <td style="padding:.6rem 1rem;border-top:1px solid var(--border);text-align:center;color:var(--green)">✓</td>
+            <td style="padding:.6rem 1rem;border-top:1px solid var(--border);text-align:center;color:var(--red)">✗</td>
+            <td style="padding:.6rem 1rem;border-top:1px solid var(--border);text-align:center;color:var(--green)">✓</td>
+            <td style="padding:.6rem 1rem;border-top:1px solid var(--border);text-align:center;color:var(--green)">✓</td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+  </section>
+
+  <!-- ── Verdict ── -->
+  <section>
+    <h2>Honest Verdict</h2>
+    <div class="verdict">
+      <h3>Recommended path: Hybrid CDN (Option 1)</h3>
+      <p>
+        <strong>Keep TPP as FlatGeobuf</strong> — it's tiny (2–5 features/country), has rich properties you need for popups, and FGB handles it perfectly.<br><br>
+        <strong>Convert Hex grid and TPR to PMTiles</strong> — these are grid/raster-like layers with zoom semantics. tippecanoe will tile them efficiently.
+        At zoom 5, you see clusters; at zoom 10, you see individual cells. Browser never loads 200K features at once.<br><br>
+        <strong>Switch Leaflet → MapLibre GL</strong> — this is the uncomfortable but necessary part. MapLibre renders PMTiles with WebGL natively. Leaflet can't efficiently render 28K+ polygons at zoom 10+.
+        Your existing <code>UkraineLayerMap.tsx</code> patterns translate directly to MapLibre — sources, layers, popups all work the same way.<br><br>
+        <strong>If your data changes weekly or less</strong> — stick with Hybrid CDN. Re-tile and upload is a 5-minute CI job.<br>
+        <strong>If your data changes daily or needs live queries</strong> — go PostGIS + Martin. The $70/month is worth the operational simplicity.
+      </p>
+    </div>
+
+    <div class="warn-box">
+      <span>⚠️</span>
+      <span><strong>Don't skip the renderer migration.</strong> The option you pick for storage doesn't fix the 200K-feature rendering problem.
+      Whether data comes from CDN or PostGIS, rendering 200K SVG paths in the browser will lag on any machine.
+      PMTiles + MapLibre WebGL solves both problems at once — storage efficiency and render performance.</span>
+    </div>
+  </section>
+
+  <!-- Recommended data pipeline -->
+  <section>
+    <h2>Recommended Pipeline (Hybrid CDN)</h2>
+    <div style="background:var(--surface);border:1px solid var(--border);border-radius:10px;padding:1.2rem 1.4rem;font-size:.83rem">
+      <div style="display:grid;grid-template-columns:80px 1fr;gap:.5rem 1rem;align-items:center">
+        <div style="color:var(--muted);font-size:.75rem;text-transform:uppercase;letter-spacing:.05em">TPP</div>
+        <div>GeoJSON → <code>ogr2ogr</code> → <strong>.fgb</strong> → S3 → CloudFront &nbsp;<span style="color:var(--green);font-size:.75rem">(unchanged)</span></div>
+
+        <div style="color:var(--muted);font-size:.75rem;text-transform:uppercase;letter-spacing:.05em">Hex grid</div>
+        <div>GeoJSON → <code>tippecanoe -Z3 -z14</code> → <strong>.pmtiles</strong> → S3 → CloudFront + MapLibre</div>
+
+        <div style="color:var(--muted);font-size:.75rem;text-transform:uppercase;letter-spacing:.05em">TPR</div>
+        <div>GeoJSON → <code>tippecanoe -Z4 -z12 --coalesce-densest-as-needed</code> → <strong>.pmtiles</strong> → S3 → CloudFront + MapLibre</div>
+      </div>
+      <div style="margin-top:1rem;padding-top:1rem;border-top:1px solid var(--border);color:var(--muted);font-size:.8rem">
+        Install tippecanoe: <code>brew install tippecanoe</code> &nbsp;·&nbsp;
+        PMTiles viewer to inspect output: <a href="https://pmtiles.io" style="color:#58a6ff">pmtiles.io</a>
+      </div>
+    </div>
+  </section>
+
+  <footer>
+    Generated June 16, 2026 &nbsp;·&nbsp; geo/vite-project/docs/scaling-options.html
+  </footer>
+
+</div>
+</body>
+</html>
